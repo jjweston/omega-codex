@@ -24,3 +24,14 @@ This workflow has been intentionally chosen to:
 - Generate realistic issue and pull request data that Omega Codex will eventually analyze and learn from.
 - Simulate real-world team collaboration, enabling more robust development and testing of Omega Codex's capabilities.
 - Explore and validate how Omega Codex can be used in complex projects with structured workflows.
+
+## Building and Running
+
+Omega Codex uses [Maven](https://maven.apache.org/) to manage builds.
+
+To build and run Omega Codex:
+
+```
+mvn package
+java -cp target/omega-codex-1.0.0-SNAPSHOT.jar com.github.jjweston.omegacodex.Main
+```
