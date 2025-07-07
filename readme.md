@@ -9,7 +9,7 @@ all while integrating tightly with version control and issue tracking platforms 
 
 ## 🚧 Early Development 🚧
 
-**This project is in early development and should be considred a prototype or proof of concept.
+**This project is in early development and should be considered a prototype or proof of concept.
 It is not yet ready for general use.
 Expect incomplete features, experimental ideas, and frequent iteration.**
 
