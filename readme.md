@@ -25,13 +25,29 @@ This workflow has been intentionally chosen to:
 - Simulate real-world team collaboration, enabling more robust development and testing of Omega Codex's capabilities.
 - Explore and validate how Omega Codex can be used in complex projects with structured workflows.
 
+## Configuration
+
+To use Omega Codex you'll need an OpenAI API key.
+
+If you use an API key with *Restricted* permissions
+you must ensure that your API key has *Request* permission to the *Model capabilities* resource.
+This is required for calling the *embeddings* API endpoint.
+
+Once you have your OpenAI API key you must configure it in Omega Codex
+by creating a file called `.env` in your project root directory with the following:
+
+```env
+OMEGACODEX_OPENAI_API_KEY=your-api-key-here
+```
+
+> [!CAUTION]
+> Do not commit your `.env` file.
+> It is already included in `.gitignore` to prevent accidental exposure of sensitive information.
+
 ## Building and Running
 
 Omega Codex uses [Maven](https://maven.apache.org/) to manage builds.
 
-To build and run Omega Codex:
+To build Omega Codex: `mvn package`
 
-```
-mvn package
-java -cp target/omega-codex-1.0.0-SNAPSHOT.jar com.github.jjweston.omegacodex.Main
-```
+To run Omega Codex: `mvn exec:java`

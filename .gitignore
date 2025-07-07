@@ -17,3 +17,6 @@
 
 # IntelliJ project configuration
 /.idea/
+
+# local environment configuration
+/.env
