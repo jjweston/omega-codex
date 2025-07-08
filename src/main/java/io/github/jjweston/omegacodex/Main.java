@@ -16,7 +16,7 @@ limitations under the License.
 
 */
 
-package com.github.jjweston.omegacodex;
+package io.github.jjweston.omegacodex;
 
 import io.github.cdimascio.dotenv.Dotenv;
 
