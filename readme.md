@@ -1,6 +1,6 @@
 # Omega Codex
 
-*Omega Codex* is an AI-powered assistant that helps you explore, understand, and develop software projects.
+Omega Codex is an AI-powered assistant that helps you explore, understand, and develop software projects.
 It aims to support software developers by
 automating tedious tasks,
 answering project-specific questions, and
