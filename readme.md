@@ -7,11 +7,12 @@ answering project-specific questions, and
 contributing meaningfully to the development process,
 all while integrating tightly with version control and issue tracking platforms like GitHub.
 
-## 🚧 Early Development 🚧
+## Early Development
 
-**This project is in early development and should be considered a prototype or proof of concept.
-It is not yet ready for general use.
-Expect incomplete features, experimental ideas, and frequent iteration.**
+> [!WARNING]
+> Omega Codex is in early development and should be considered a prototype or proof of concept.
+> It is not yet ready for general use.
+> Expect incomplete features, experimental ideas, and frequent iteration.
 
 ## Development Process
 
