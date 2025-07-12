@@ -18,12 +18,20 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-public class Main
+class OmegaCodexException extends RuntimeException
 {
-    public static void main( String[] args )
+    OmegaCodexException( String message )
     {
-        String input = "Omega Codex is an AI assistant for developers.";
-        EmbeddingApiService embeddingApiService = new EmbeddingApiService();
-        embeddingApiService.getEmbedding( input );
+        super( message );
+    }
+
+    OmegaCodexException( String message, Throwable cause )
+    {
+        super( message, cause );
+    }
+
+    OmegaCodexException( Throwable cause )
+    {
+        super( cause );
     }
 }
