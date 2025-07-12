@@ -18,12 +18,9 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-public class Main
+class OmegaCodexLogger
 {
-    public static void main( String[] args )
-    {
-        String input = "Omega Codex is an AI assistant for developers.";
-        EmbeddingApiService embeddingApiService = new EmbeddingApiService();
-        embeddingApiService.getEmbedding( input );
-    }
+    OmegaCodexLogger() {}
+
+    void log( String message ) { System.out.println( message ); }
 }
