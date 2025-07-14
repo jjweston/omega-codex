@@ -46,7 +46,7 @@ class EmbeddingApiService
         this.apiEndPoint        = "https://api.openai.com/v1/embeddings";
         this.apiKeyName         = "OMEGACODEX_OPENAI_API_KEY";
         this.model              = "text-embedding-3-small";
-        this.inputLimit         = 20000;
+        this.inputLimit         = 20_000;
         this.dotenv             = Dotenv.load();
         this.httpRequestBuilder = new HttpRequestBuilder();
         this.httpClient         = HttpClient.newHttpClient();
@@ -116,7 +116,7 @@ class EmbeddingApiService
         }
 
         long end = System.nanoTime();
-        long deltaMs = ( end - start ) / 1000000;
+        long deltaMs = ( end - start ) / 1_000_000;
 
         int statusCode = response.statusCode();
         String responseBody = response.body();

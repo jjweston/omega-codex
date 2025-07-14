@@ -49,7 +49,7 @@ class EmbeddingApiServiceTest
     private final String testApiKeyName  = "OMEGACODEX_TEST_API_KEY";
 
     private final String testModel       = "test-embedding";
-    private final int    testInputLimit  = 1000;
+    private final int    testInputLimit  = 1_000;
 
     @Mock private Dotenv                 mockDotenv;
     @Mock private HttpClient             mockHttpClient;
