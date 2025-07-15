@@ -46,7 +46,7 @@ class EmbeddingApiService
         this.apiEndPoint        = "https://api.openai.com/v1/embeddings";
         this.apiKeyName         = "OMEGACODEX_OPENAI_API_KEY";
         this.model              = "text-embedding-3-small";
-        this.inputLimit         = 20000;
+        this.inputLimit         = 20_000;
         this.dotenv             = Dotenv.load();
         this.httpRequestBuilder = new HttpRequestBuilder();
         this.httpClient         = HttpClient.newHttpClient();
@@ -85,6 +85,8 @@ class EmbeddingApiService
             throw new IllegalStateException( "Missing required environment variable: " + this.apiKeyName );
         }
 
+        this.omegaCodexLogger.log( String.format( "Embedding API Call, Starting, Input Length: %,d", input.length() ));
+
         ObjectMapper objectMapper = new ObjectMapper();
 
         Map< String, String > requestMap = new HashMap<>();
@@ -102,6 +104,8 @@ class EmbeddingApiService
                 .POST( requestString )
                 .build();
 
+        long start = System.nanoTime();
+
         HttpResponse< String > response;
         try { response = this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ); }
         catch ( IOException e ) { throw new OmegaCodexException( "IOException in embedding API call.", e ); }
@@ -111,12 +115,11 @@ class EmbeddingApiService
             throw new OmegaCodexException( e );
         }
 
+        long end = System.nanoTime();
+        long deltaMs = ( end - start ) / 1_000_000;
+
         int statusCode = response.statusCode();
         String responseBody = response.body();
-
-        this.omegaCodexLogger.log( "Status Code: " + statusCode );
-        this.omegaCodexLogger.log( "Response Body:" );
-        this.omegaCodexLogger.log( responseBody );
 
         if ( statusCode != 200 )
         {
@@ -129,10 +132,15 @@ class EmbeddingApiService
             throw new OmegaCodexException( exceptionMessage );
         }
 
-        JsonNode embeddingNode;
-        try { embeddingNode = objectMapper.readTree( responseBody ).path( "data" ).get( 0 ).path( "embedding" ); }
+        JsonNode rootNode;
+        try { rootNode = objectMapper.readTree( responseBody ); }
         catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
 
+        int totalTokens = rootNode.path( "usage" ).path( "total_tokens" ).intValue();
+        this.omegaCodexLogger.log(
+                String.format( "Embedding API Call, Complete, Tokens: %,d, Duration: %,d ms", totalTokens, deltaMs ));
+
+        JsonNode embeddingNode = rootNode.path( "data" ).get( 0 ).path( "embedding" );
         double[] embedding = new double[ embeddingNode.size() ];
         for ( int i = 0; i < embeddingNode.size(); i++ ) embedding[ i ] = embeddingNode.get( i ).asDouble();
         return embedding;

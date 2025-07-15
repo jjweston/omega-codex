@@ -15,8 +15,12 @@
 # Maven build directory
 /target/
 
-# IntelliJ project configuration
+# IntelliJ configuration
 /.idea/
+/omega-codex.iml
 
 # local environment configuration
 /.env
+
+# Omega Codex work directory
+/work/

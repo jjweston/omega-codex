@@ -32,7 +32,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +49,7 @@ class EmbeddingApiServiceTest
     private final String testApiKeyName  = "OMEGACODEX_TEST_API_KEY";
 
     private final String testModel       = "test-embedding";
-    private final int    testInputLimit  = 1000;
+    private final int    testInputLimit  = 1_000;
 
     @Mock private Dotenv                 mockDotenv;
     @Mock private HttpClient             mockHttpClient;
@@ -123,6 +122,8 @@ class EmbeddingApiServiceTest
         int statusCode = 200;
         double[] expectedEmbedding = { -0.75, -0.5, 0.5, 0.75 };
 
+        ObjectMapper objectMapper = new ObjectMapper();
+
         String response = String.format( """
                 {
                   "object" : "list",
@@ -137,7 +138,7 @@ class EmbeddingApiServiceTest
                     "total_tokens" : 10
                   }
                 }
-                """, Arrays.toString( expectedEmbedding ), this.testModel );
+                """, objectMapper.writeValueAsString( expectedEmbedding ), this.testModel );
 
         this.mockApiCall( statusCode, response );
 
@@ -147,7 +148,6 @@ class EmbeddingApiServiceTest
         expectedRequestMap.put( "model", this.testModel );
         expectedRequestMap.put( "input", input );
 
-        ObjectMapper objectMapper = new ObjectMapper();
         String actualRequestString = this.requestBodyCaptor.getValue();
         TypeReference< HashMap< String, String >> typeRef = new TypeReference<>() {};
         Map< String, String > actualRequestMap = objectMapper.readValue( actualRequestString, typeRef );
