@@ -29,15 +29,8 @@ public class Main
         String input = "Omega Codex is an AI assistant for developers.";
         System.out.println( "Input: " + input );
 
-        EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService();
-        double[] embedding =  embeddingCacheService.getEmbedding( input );
-
-        if ( embedding == null )
-        {
-            EmbeddingApiService embeddingApiService = new EmbeddingApiService();
-            embedding = embeddingApiService.getEmbedding( input );
-            embeddingCacheService.setEmbedding( input, embedding );
-        }
+        EmbeddingService embeddingService = new EmbeddingService();
+        double[] embedding = embeddingService.getEmbedding( input );
 
         String embeddingString;
         ObjectMapper objectMapper = new ObjectMapper();
