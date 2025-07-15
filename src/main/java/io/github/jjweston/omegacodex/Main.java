@@ -18,12 +18,37 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class Main
 {
     public static void main( String[] args )
     {
+        int embeddingStringLimit = 50;
         String input = "Omega Codex is an AI assistant for developers.";
-        EmbeddingApiService embeddingApiService = new EmbeddingApiService();
-        embeddingApiService.getEmbedding( input );
+        System.out.println( "Input: " + input );
+
+        EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService();
+        double[] embedding =  embeddingCacheService.getEmbedding( input );
+
+        if ( embedding == null )
+        {
+            EmbeddingApiService embeddingApiService = new EmbeddingApiService();
+            embedding = embeddingApiService.getEmbedding( input );
+            embeddingCacheService.setEmbedding( input, embedding );
+        }
+
+        String embeddingString;
+        ObjectMapper objectMapper = new ObjectMapper();
+        try { embeddingString = objectMapper.writeValueAsString( embedding ); }
+        catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
+
+        if ( embeddingString.length() > embeddingStringLimit )
+        {
+            embeddingString = embeddingString.substring( 0, embeddingStringLimit ) + "...";
+        }
+
+        System.out.println( "Embedding: " + embeddingString );
     }
 }
