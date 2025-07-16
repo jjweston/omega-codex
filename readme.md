@@ -14,6 +14,13 @@ all while integrating tightly with version control and issue tracking platforms 
 > It is not yet ready for general use.
 > Expect incomplete features, experimental ideas, and frequent iteration.
 
+The current early development goal for Omega Codex is to develop a minimal functional implementation
+that is able to ingest basic information about a GitHub project into a vectorized knowledge base,
+allow a user to make a query about the project,
+use Retrieval Augmented Generation to send the user’s query
+along with relevant portions of the project to the ChatGPT API,
+and display the ChatGPT API response to the user.
+
 ## Development Process
 
 Although Omega Codex is currently a one-person project,
