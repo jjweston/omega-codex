@@ -52,13 +52,42 @@ OMEGACODEX_OPENAI_API_KEY=your-api-key-here
 > Do not commit your `.env` file.
 > It is already included in `.gitignore` to prevent accidental exposure of sensitive information.
 
-## Building and Running
+## Prerequisites
 
-Omega Codex uses [Maven](https://maven.apache.org/) to manage builds.
+Omega Codex is primarily written in Java but also uses Python for some tasks.
+
+### Java
+
+You need a Java JDK and [Maven](https://maven.apache.org/) to build and run Omega Codex.
+
+### Python
+
+You need [Python](https://www.python.org/) to run Omega Codex.
+
+Before running Omega Codex you must create a Python virtual environment.
+From the `python-tools` directory, run: `python -m venv .venv`
+
+If you wish to run Python scripts manually you should activate the virtual environment first.
+From the `python-tools` directory, run the activation command for your platform:
+
+| Platform             | Activation Command              |
+|----------------------|---------------------------------|
+| Windows (CMD)        | `.venv\Scripts\activate.bat`    |
+| Windows (PowerShell) | `.venv\Scripts\Activate.ps1`    |
+| Windows (Git Bash)   | `source .venv/Scripts/activate` |
+| macOS/Linux          | `source .venv/bin/activate`     |
+
+> [!TIP]
+> Activation is only necessary if you're running Python scripts manually.
+> Omega Codex calls Python scripts using the correct environment automatically.
+
+## Building and Running
 
 To build Omega Codex: `mvn package`
 
-To run Omega Codex: `mvn exec:java`
+To run the *Embedding* proof of concept: `mvn exec:java -P embed`
+
+To run the *Hello World in Python* proof of concept: `mvn exec:java -P hello`
 
 ## License
 

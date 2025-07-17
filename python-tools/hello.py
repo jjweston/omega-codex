@@ -12,18 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Maven build directory
-/target/
-
-# Python virtual environment
-/python-tools/.venv/
-
-# IntelliJ configuration
-/.idea/
-/omega-codex.iml
-
-# local environment configuration
-/.env
-
-# Omega Codex work directory
-/work/
+print( "Hello, from Python!" )

@@ -21,7 +21,7 @@ package io.github.jjweston.omegacodex;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class Main
+public class Embed
 {
     public static void main( String[] args )
     {
