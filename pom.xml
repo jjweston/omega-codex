@@ -33,6 +33,21 @@ limitations under the License.
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <profiles>
+        <profile>
+            <id>embed</id>
+            <properties>
+                <exec.mainClass>io.github.jjweston.omegacodex.Embed</exec.mainClass>
+            </properties>
+        </profile>
+        <profile>
+            <id>hello</id>
+            <properties>
+                <exec.mainClass>io.github.jjweston.omegacodex.Hello</exec.mainClass>
+            </properties>
+        </profile>
+    </profiles>
+
     <dependencies>
         <dependency>
             <groupId>io.github.cdimascio</groupId>
@@ -48,6 +63,11 @@ limitations under the License.
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.50.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -77,14 +97,6 @@ limitations under the License.
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <mainClass>io.github.jjweston.omegacodex.Main</mainClass>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
