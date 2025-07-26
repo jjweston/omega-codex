@@ -18,37 +18,84 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import org.apache.commons.lang3.SystemUtils;
-
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Hello
 {
     public static void main( String[] args ) throws Exception
     {
         Path pythonToolsPath = Paths.get( "python-tools" );
-        Path venvPath = pythonToolsPath.resolve( ".venv" );
-        Path pythonPath = SystemUtils.IS_OS_WINDOWS ?
-                venvPath.resolve( Paths.get( "Scripts", "python.exe" )) :
-                venvPath.resolve( Paths.get( "bin", "python" ));
-        Path scriptPath = pythonToolsPath.resolve( "hello.py" );
+        Path scriptPath = Paths.get( "hello.py" );
 
-        System.out.println( "Python executable: " + pythonPath );
-        System.out.println( "Python script: " + scriptPath );
+        System.out.println( "Running Python script: " + scriptPath );
 
-        ProcessBuilder pb = new ProcessBuilder( pythonPath.toString(), scriptPath.toString() );
-        pb.redirectErrorStream( true );
-        Process process = pb.start();
+        ProcessBuilder processBuilder = new ProcessBuilder( "poetry", "run", "python", scriptPath.toString() );
+        processBuilder.directory( pythonToolsPath.toFile() );
+        Process process = processBuilder.start();
 
-        BufferedReader reader = new BufferedReader( new InputStreamReader( process.getInputStream() ));
+        // synchronization is unnecessary; these lists are only accessed by one thread at a time
+        List< String > stdoutLines = new LinkedList<>();
+        List< String > stderrLines = new LinkedList<>();
 
-        String line;
-        while (( line = reader.readLine()) != null ) System.out.println( "Python says: " + line );
+        AtomicReference< Exception > stdoutExceptionReference = new AtomicReference<>();
+        AtomicReference< Exception > stderrExceptionReference = new AtomicReference<>();
+
+        Thread stdoutThread = Hello.readLines( process.inputReader(), stdoutLines, stdoutExceptionReference );
+        Thread stderrThread = Hello.readLines( process.errorReader(), stderrLines, stderrExceptionReference );
 
         int exitCode = process.waitFor();
+        stdoutThread.join();
+        stderrThread.join();
+
+        List< OmegaCodexException > exceptions = new LinkedList<>();
+        Exception stdoutException = stdoutExceptionReference.get();
+        Exception stderrException = stderrExceptionReference.get();
+
+        if ( stdoutException != null )
+        {
+            exceptions.add(
+                    new OmegaCodexException( "Exception occurred while reading standard input.", stdoutException ));
+        }
+
+        if ( stderrException != null )
+        {
+            exceptions.add(
+                    new OmegaCodexException( "Exception occurred while reading standard error.", stderrException ));
+        }
+
+        if ( !exceptions.isEmpty() )
+        {
+            if ( exceptions.size() == 1 ) throw exceptions.getFirst();
+
+            OmegaCodexException exception = new OmegaCodexException( "Exceptions occurred while running Python." );
+            for ( Exception e : exceptions ) exception.addSuppressed( e );
+            throw exception;
+        }
+
         System.out.println( "Python exited with code: " + exitCode );
+        for ( String line : stdoutLines ) System.out.println( "Standard Out: " + line );
+        for ( String line : stderrLines ) System.out.println( "Standard Err: " + line );
+    }
+
+    private static Thread readLines(
+            BufferedReader reader, List< String> lines, AtomicReference< Exception > exception )
+    {
+        Thread thread = new Thread( () ->
+        {
+            try
+            {
+                String line;
+                while (( line = reader.readLine() ) != null ) lines.add( line );
+            }
+            catch ( Exception e ) { exception.set( e ); }
+        } );
+
+        thread.start();
+        return thread;
     }
 }
