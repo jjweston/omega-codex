@@ -18,12 +18,10 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import java.io.BufferedReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Hello
 {
@@ -38,23 +36,23 @@ public class Hello
         processBuilder.directory( pythonToolsPath.toFile() );
         Process process = processBuilder.start();
 
-        // synchronization is unnecessary; these lists are only accessed by one thread at a time
-        List< String > stdoutLines = new LinkedList<>();
-        List< String > stderrLines = new LinkedList<>();
+        ThreadedReader stdoutReader = new ThreadedReader();
+        ThreadedReader stderrReader = new ThreadedReader();
 
-        AtomicReference< Exception > stdoutExceptionReference = new AtomicReference<>();
-        AtomicReference< Exception > stderrExceptionReference = new AtomicReference<>();
+        int exitCode;
+        try ( stdoutReader; stderrReader )
+        {
+            stdoutReader.start( process.inputReader() );
+            stderrReader.start( process.errorReader() );
 
-        Thread stdoutThread = Hello.readLines( process.inputReader(), stdoutLines, stdoutExceptionReference );
-        Thread stderrThread = Hello.readLines( process.errorReader(), stderrLines, stderrExceptionReference );
-
-        int exitCode = process.waitFor();
-        stdoutThread.join();
-        stderrThread.join();
+            exitCode = process.waitFor();
+            stdoutReader.join();
+            stderrReader.join();
+        }
 
         List< OmegaCodexException > exceptions = new LinkedList<>();
-        Exception stdoutException = stdoutExceptionReference.get();
-        Exception stderrException = stderrExceptionReference.get();
+        Exception stdoutException = stdoutReader.getException();
+        Exception stderrException = stderrReader.getException();
 
         if ( stdoutException != null )
         {
@@ -78,24 +76,7 @@ public class Hello
         }
 
         System.out.println( "Python exited with code: " + exitCode );
-        for ( String line : stdoutLines ) System.out.println( "Standard Out: " + line );
-        for ( String line : stderrLines ) System.out.println( "Standard Err: " + line );
-    }
-
-    private static Thread readLines(
-            BufferedReader reader, List< String> lines, AtomicReference< Exception > exception )
-    {
-        Thread thread = new Thread( () ->
-        {
-            try
-            {
-                String line;
-                while (( line = reader.readLine() ) != null ) lines.add( line );
-            }
-            catch ( Exception e ) { exception.set( e ); }
-        } );
-
-        thread.start();
-        return thread;
+        for ( String line : stdoutReader.getLines() ) System.out.println( "Standard Out: " + line );
+        for ( String line : stderrReader.getLines() ) System.out.println( "Standard Err: " + line );
     }
 }
