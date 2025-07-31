@@ -19,13 +19,13 @@ limitations under the License.
 package io.github.jjweston.omegacodex;
 
 import java.io.BufferedReader;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 class ThreadedReader implements AutoCloseable
 {
     // synchronization is unnecessary; this is only accessed by one thread at a time
-    private final List< String > lines = new ArrayList<>();
+    private final List< String > lines = new LinkedList<>();
 
     private Thread thread;
     private Exception exception;
