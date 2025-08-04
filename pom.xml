@@ -41,9 +41,9 @@ limitations under the License.
             </properties>
         </profile>
         <profile>
-            <id>hello</id>
+            <id>split</id>
             <properties>
-                <exec.mainClass>io.github.jjweston.omegacodex.Hello</exec.mainClass>
+                <exec.mainClass>io.github.jjweston.omegacodex.Split</exec.mainClass>
             </properties>
         </profile>
     </profiles>
@@ -63,11 +63,6 @@ limitations under the License.
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.50.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

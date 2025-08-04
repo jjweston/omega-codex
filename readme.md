@@ -62,24 +62,10 @@ You need a Java JDK and [Maven](https://maven.apache.org/) to build and run Omeg
 
 ### Python
 
-You need [Python](https://www.python.org/) to run Omega Codex.
+You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.org/) to run Omega Codex.
 
-Before running Omega Codex you must create a Python virtual environment.
-From the `python-tools` directory, run: `python -m venv .venv`
-
-If you wish to run Python scripts manually you should activate the virtual environment first.
-From the `python-tools` directory, run the activation command for your platform:
-
-| Platform             | Activation Command              |
-|----------------------|---------------------------------|
-| Windows (CMD)        | `.venv\Scripts\activate.bat`    |
-| Windows (PowerShell) | `.venv\Scripts\Activate.ps1`    |
-| Windows (Git Bash)   | `source .venv/Scripts/activate` |
-| macOS/Linux          | `source .venv/bin/activate`     |
-
-> [!TIP]
-> Activation is only necessary if you're running Python scripts manually.
-> Omega Codex calls Python scripts using the correct environment automatically.
+Before running Omega Codex you must install Python dependencies.
+In the `python-tools` directory, run: `poetry install`
 
 ## Building and Running
 
@@ -87,7 +73,7 @@ To build Omega Codex: `mvn package`
 
 To run the *Embedding* proof of concept: `mvn exec:java -P embed`
 
-To run the *Hello World in Python* proof of concept: `mvn exec:java -P hello`
+To run the *Markdown Split* proof of concept: `mvn exec:java -P split`
 
 ## License
 
