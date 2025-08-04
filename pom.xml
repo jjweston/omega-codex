@@ -41,9 +41,9 @@ limitations under the License.
             </properties>
         </profile>
         <profile>
-            <id>hello</id>
+            <id>split</id>
             <properties>
-                <exec.mainClass>io.github.jjweston.omegacodex.Hello</exec.mainClass>
+                <exec.mainClass>io.github.jjweston.omegacodex.Split</exec.mainClass>
             </properties>
         </profile>
     </profiles>

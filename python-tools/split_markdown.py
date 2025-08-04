@@ -12,4 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-print( "Hello, from Python!" )
+import json
+import sys
+
+from langchain_text_splitters import ExperimentalMarkdownSyntaxTextSplitter
+
+def main():
+    input = sys.stdin.read()
+    splitter = ExperimentalMarkdownSyntaxTextSplitter( strip_headers = False )
+    docs = splitter.split_text( input )
+    maps = [ { "content": doc.page_content, "metadata": doc.metadata } for doc in docs ]
+    output = json.dumps( maps, ensure_ascii = False, indent = 4 )
+    print( output )
+
+if __name__ == "__main__":
+    main()

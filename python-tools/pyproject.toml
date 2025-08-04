@@ -15,6 +15,10 @@
 [tool.poetry]
 package-mode = false
 
+[tool.poetry.dependencies]
+python = "^3.9"
+langchain = "^0.3.27"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"

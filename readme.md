@@ -64,13 +64,16 @@ You need a Java JDK and [Maven](https://maven.apache.org/) to build and run Omeg
 
 You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.org/) to run Omega Codex.
 
+Before running Omega Codex you must install Python dependencies.
+In the `python-tools` directory, run: `poetry install`
+
 ## Building and Running
 
 To build Omega Codex: `mvn package`
 
 To run the *Embedding* proof of concept: `mvn exec:java -P embed`
 
-To run the *Hello World in Python* proof of concept: `mvn exec:java -P hello`
+To run the *Markdown Split* proof of concept: `mvn exec:java -P split`
 
 ## License
 
