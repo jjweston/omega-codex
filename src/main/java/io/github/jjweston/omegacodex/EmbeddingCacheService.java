@@ -133,7 +133,7 @@ class EmbeddingCacheService
         try
         {
             Connection connection = this.dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement("""
+            PreparedStatement statement = connection.prepareStatement( """
                     CREATE TABLE IF NOT EXISTS Embeddings
                     (
                         Id        INTEGER PRIMARY KEY AUTOINCREMENT,
