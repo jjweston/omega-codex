@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class EmbeddingApiServiceIT
 {
     @Test
-    void testGetEmbedding_success() throws Exception
+    void testGetEmbedding() throws Exception
     {
         String input = "This is an automated integration test for calling the OpenAI Embedding API.";
         URL resource = this.getClass().getResource( this.getClass().getSimpleName() + ".json" );
