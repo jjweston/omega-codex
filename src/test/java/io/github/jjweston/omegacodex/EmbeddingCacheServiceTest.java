@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.sqlite.SQLiteDataSource;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -43,8 +42,6 @@ class EmbeddingCacheServiceTest
 {
     private final double[] testEmbedding = { -0.75, -0.5, 0.5, 0.75 };
 
-    @Mock private DirectoryCreator  mockDirectoryCreator;
-    @Mock private SQLiteDataSource  mockDataSource;
     @Mock private OmegaCodexLogger  mockOmegaCodexLogger;
     @Mock private Connection        mockConnection;
     @Mock private PreparedStatement mockPreparedStatement;
@@ -55,11 +52,8 @@ class EmbeddingCacheServiceTest
     @BeforeEach
     void setUp() throws Exception
     {
-        when( this.mockDataSource.getConnection() ).thenReturn( this.mockConnection );
         when( this.mockConnection.prepareStatement( any() )).thenReturn( this.mockPreparedStatement );
-
-        this.embeddingCacheService =
-                new EmbeddingCacheService( mockDirectoryCreator, mockDataSource, mockOmegaCodexLogger );
+        this.embeddingCacheService = new EmbeddingCacheService( this.mockConnection, this.mockOmegaCodexLogger );
     }
 
     @Test

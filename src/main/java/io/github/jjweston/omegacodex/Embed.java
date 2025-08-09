@@ -21,6 +21,9 @@ package io.github.jjweston.omegacodex;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+
 public class Embed
 {
     public static void main( String[] args )
@@ -29,9 +32,7 @@ public class Embed
         String input = "Omega Codex is an AI assistant for developers.";
         System.out.println( "Input: " + input );
 
-        EmbeddingService embeddingService = new EmbeddingService();
-        double[] embedding = embeddingService.getEmbedding( input );
-
+        double[] embedding = Embed.getEmbedding( input );
         String embeddingString;
         ObjectMapper objectMapper = new ObjectMapper();
         try { embeddingString = objectMapper.writeValueAsString( embedding ); }
@@ -43,5 +44,17 @@ public class Embed
         }
 
         System.out.println( "Embedding: " + embeddingString );
+    }
+
+    private static double[] getEmbedding( String input )
+    {
+        SQLiteConnectionFactory sqLiteConnectionFactory = new SQLiteConnectionFactory();
+        try ( Connection connection = sqLiteConnectionFactory.create() )
+        {
+            EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
+            EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService );
+            return embeddingService.getEmbedding( input );
+        }
+        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to close database connection.", e ); }
     }
 }

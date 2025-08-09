@@ -20,10 +20,7 @@ package io.github.jjweston.omegacodex;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.sqlite.SQLiteDataSource;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -32,29 +29,18 @@ import java.sql.Statement;
 
 class EmbeddingCacheService
 {
-    private final Path workDirectory = Paths.get( "work" );
-    private final Path databaseFile  = Paths.get( "omegacodex.db" );
-
-    private final DirectoryCreator directoryCreator;
-    private final SQLiteDataSource dataSource;
+    private final Connection connection;
     private final OmegaCodexLogger omegaCodexLogger;
 
-    EmbeddingCacheService()
+    EmbeddingCacheService( Connection connection )
     {
-        this.directoryCreator = new DirectoryCreator();
-        this.dataSource       = new SQLiteDataSource();
-        this.omegaCodexLogger = new OmegaCodexLogger();
-
-        this.init();
+        this( connection, new OmegaCodexLogger() );
     }
 
-    EmbeddingCacheService(
-            DirectoryCreator directoryCreator, SQLiteDataSource dataSource, OmegaCodexLogger omegaCodexLogger )
+    EmbeddingCacheService( Connection connection, OmegaCodexLogger omegaCodexLogger )
     {
-        this.directoryCreator = directoryCreator;
-        this.dataSource       = dataSource;
+        this.connection       = connection;
         this.omegaCodexLogger = omegaCodexLogger;
-
         this.init();
     }
 
@@ -65,8 +51,7 @@ class EmbeddingCacheService
 
         try
         {
-            Connection connection = this.dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = this.connection.prepareStatement(
                     "SELECT Embedding FROM Embeddings WHERE input = ?" );
             statement.setString( 1, input );
             ResultSet result = statement.executeQuery();
@@ -99,8 +84,7 @@ class EmbeddingCacheService
 
         try
         {
-            Connection connection = this.dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = this.connection.prepareStatement(
                     "INSERT OR IGNORE INTO Embeddings ( Input, Embedding ) VALUES ( ?, ? )",
                     Statement.RETURN_GENERATED_KEYS );
             statement.setString( 1, input );
@@ -117,23 +101,16 @@ class EmbeddingCacheService
                 long id = generatedKeys.getLong( 1 );
                 this.omegaCodexLogger.log( String.format( "Cache New Embedding, ID: %,d", id ));
             }
-            else throw new OmegaCodexException( "Failed to get Id of added embedding." );
+            else throw new OmegaCodexException( "Failed to get ID of added embedding." );
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to insert into Embeddings table.", e ); }
     }
 
     private void init()
     {
-        this.directoryCreator.create( this.workDirectory );
-
-        Path databasePath = this.workDirectory.resolve( this.databaseFile );
-        String databaseUrl = "jdbc:sqlite:" + databasePath;
-        this.dataSource.setUrl( databaseUrl );
-
         try
         {
-            Connection connection = this.dataSource.getConnection();
-            PreparedStatement statement = connection.prepareStatement("""
+            PreparedStatement statement = this.connection.prepareStatement( """
                     CREATE TABLE IF NOT EXISTS Embeddings
                     (
                         Id        INTEGER PRIMARY KEY AUTOINCREMENT,

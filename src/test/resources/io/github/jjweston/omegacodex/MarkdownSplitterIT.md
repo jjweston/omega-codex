@@ -1,5 +1,10 @@
-/*
+# Test Markdown
 
+This is a test Markdown file.
+
+## License
+
+```text
 Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,22 +18,4 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-*/
-
-package io.github.jjweston.omegacodex;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-class DirectoryCreator
-{
-    DirectoryCreator() {}
-
-    void create( Path path )
-    {
-        try { Files.createDirectories( path ); }
-        catch ( IOException e ) { throw new OmegaCodexException( "Failed to create directory: " + path, e ); }
-    }
-}
+```
