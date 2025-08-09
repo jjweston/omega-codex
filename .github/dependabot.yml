@@ -21,6 +21,6 @@ updates:
       interval: "weekly"
 
   - package-ecosystem: "pip"
-    directory: "/python-tools/"
+    directory: "/python-tools"
     schedule:
       interval: "weekly"
