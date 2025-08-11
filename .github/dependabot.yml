@@ -24,3 +24,4 @@ updates:
     directory: "/python-tools"
     schedule:
       interval: "weekly"
+    versioning-strategy: increase
