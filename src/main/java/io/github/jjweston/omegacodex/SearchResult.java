@@ -18,9 +18,6 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-class OmegaCodexLogger
+record SearchResult( long id, float score )
 {
-    OmegaCodexLogger() {}
-
-    void log( String message ) { System.out.println( message ); }
 }

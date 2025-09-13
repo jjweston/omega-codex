@@ -29,21 +29,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class EmbeddingApiServiceIT
 {
     @Test
-    void testGetEmbedding() throws Exception
+    void testGetEmbeddingVector() throws Exception
     {
         String input = "This is an automated integration test for calling the OpenAI Embedding API.";
         double similarityThreshold = 0.99999;
 
         URL resource = this.getClass().getResource( this.getClass().getSimpleName() + ".json" );
         ObjectMapper objectMapper = new ObjectMapper();
-        double[] expectedEmbedding = objectMapper.readValue( resource, double[].class );
+        double[] expectedVector = objectMapper.readValue( resource, double[].class );
 
         EmbeddingApiService embeddingApiService = new EmbeddingApiService();
-        double[] actualEmbedding = embeddingApiService.getEmbedding( input );
+        double[] actualVector = embeddingApiService.getEmbeddingVector( input );
 
-        assertEquals( expectedEmbedding.length, actualEmbedding.length, "Unexpected embedding length." );
+        assertEquals( expectedVector.length, actualVector.length, "Unexpected vector length." );
 
-        double similarity = this.cosineSimilarity( expectedEmbedding, actualEmbedding );
+        double similarity = this.cosineSimilarity( expectedVector, actualVector );
         System.out.printf( "Cosine Similarity: %.10f%n", similarity );
         assertThat( similarity ).as( "Cosine Similarity" ).isGreaterThanOrEqualTo( similarityThreshold );
     }

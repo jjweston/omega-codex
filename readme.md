@@ -33,28 +33,10 @@ This workflow has been intentionally chosen to:
 - Simulate real-world team collaboration, enabling more robust development and testing of Omega Codex's capabilities.
 - Explore and validate how Omega Codex can be used in complex projects with structured workflows.
 
-## Configuration
-
-To use Omega Codex you'll need an OpenAI API key.
-
-If you use an API key with *Restricted* permissions
-you must ensure that your API key has *Request* permission to the *Model capabilities* resource.
-This is required for calling the *embeddings* API endpoint.
-
-Once you have your OpenAI API key you must configure it in Omega Codex
-by creating a file called `.env` in your project root directory with the following:
-
-```env
-OMEGACODEX_OPENAI_API_KEY=your-api-key-here
-```
-
-> [!CAUTION]
-> Do not commit your `.env` file.
-> It is already included in `.gitignore` to prevent accidental exposure of sensitive information.
-
 ## Prerequisites
 
 Omega Codex is primarily written in Java but also uses Python for some tasks.
+It also uses the OpenAI API and Qdrant.
 
 ### Java
 
@@ -67,6 +49,81 @@ You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.or
 Before running Omega Codex you must install Python dependencies.
 In the `python-tools` directory, run: `poetry install`
 
+### OpenAI API
+
+To use Omega Codex you'll need an [OpenAI API](https://openai.com/api/) key.
+
+If you use an API key with *Restricted* permissions
+you must ensure that your API key has *Request* permission to the *Model capabilities* resource.
+This is required for calling the *embeddings* API endpoint.
+
+### Qdrant
+
+You need a [Qdrant](https://qdrant.tech/) database to run Omega Codex.
+
+We provide instructions for running Qdrant in a Docker container, but other options are available,
+such as [Qdrant Cloud](https://qdrant.tech/documentation/cloud-quickstart/).
+
+Ensure that [Docker Engine](https://docs.docker.com/engine/install/) is installed before proceeding.
+
+Qdrant images are available from Docker Hub: https://hub.docker.com/r/qdrant/qdrant
+
+To download or update the Qdrant Docker image: `docker pull qdrant/qdrant:v1.15.2`
+
+To create a Docker container for Qdrant:
+
+```bash
+docker create --name qdrant \
+    -p 6333:6333 -p 6334:6334 \
+    -v qdrant-storage:/qdrant/storage \
+    qdrant/qdrant:v1.15.2
+```
+
+This command does the following:
+
+* Assigns the name `qdrant` to the container (`--name`).
+* Opens network port 6333 for the Qdrant REST API (`-p`).
+* Opens network port 6334 for the Qdrant gRPC API (`-p`).
+* Attaches the `qdrant-storage` volume to `/qdrant/storage` for storing Qdrant's data (`-v`).
+
+To start the Qdrant Docker container: `docker start qdrant`
+
+Verify Qdrant is running by checking its web interface
+(replace `qdrant-host` with the hostname or IP of your Qdrant database):
+http://qdrant-host:6333/dashboard
+
+To stop the Qdrant Docker container: `docker stop qdrant`
+
+To remove the Qdrant Docker container: `docker rm qdrant`
+
+Removing the Qdrant Docker container does not remove the `qdrant-storage` volume.
+
+To remove the `qdrant-storage` volume: `docker volume rm qdrant-storage`
+
+## Configuration
+
+Omega Codex requires the following environment variables to be set:
+
+* `OMEGACODEX_OPENAI_API_KEY` : Your OpenAI API key.
+* `OMEGACODEX_QDRANT_HOST` : The host name or IP address of your Qdrant database.
+* `OMEGACODEX_QDRANT_GRPC_PORT` : The gRPC port of your Qdrant database, most likely `6334`.
+
+We use [dotenv-java](https://github.com/cdimascio/dotenv-java)
+to allow environment variables to be specified in a file.
+To do so, create filed called `.env` in your project root directory with the following:
+
+```env
+OMEGACODEX_OPENAI_API_KEY=openai-api-key
+OMEGACODEX_QDRANT_HOST=qdrant-host
+OMEGACODEX_QDRANT_GRPC_PORT=qdrant-grpc-port
+```
+
+Replace the values with settings appropriate for your environment.
+
+> [!CAUTION]
+> Do not commit `.env` to Git.
+> Doing so will leak sensitive information.
+
 ## Building and Running
 
 To build Omega Codex: `mvn package`
@@ -74,6 +131,8 @@ To build Omega Codex: `mvn package`
 To run the *Embedding* proof of concept: `mvn exec:java -P embed`
 
 To run the *Markdown Split* proof of concept: `mvn exec:java -P split`
+
+To run the *Qdrant* proof of concept: `mvn exec:java -P qdrant`
 
 ## License
 

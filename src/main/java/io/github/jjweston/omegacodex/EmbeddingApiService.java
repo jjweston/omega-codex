@@ -21,9 +21,7 @@ package io.github.jjweston.omegacodex;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.cdimascio.dotenv.Dotenv;
 
-import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -33,41 +31,45 @@ import java.util.Map;
 class EmbeddingApiService
 {
     private final String             apiEndPoint;
-    private final String             apiKeyName;
+    private final String             apiKeyVarName;
     private final String             model;
     private final int                inputLimit;
-    private final Dotenv             dotenv;
+    private final Environment        environment;
     private final HttpRequestBuilder httpRequestBuilder;
     private final HttpClient         httpClient;
-    private final OmegaCodexLogger   omegaCodexLogger;
+    private final OmegaCodexUtil     omegaCodexUtil;
+    private final TaskRunner         taskRunner;
 
     EmbeddingApiService()
     {
         this.apiEndPoint        = "https://api.openai.com/v1/embeddings";
-        this.apiKeyName         = "OMEGACODEX_OPENAI_API_KEY";
+        this.apiKeyVarName      = "OMEGACODEX_OPENAI_API_KEY";
         this.model              = "text-embedding-3-small";
         this.inputLimit         = 20_000;
-        this.dotenv             = Dotenv.load();
+        this.environment        = new Environment();
         this.httpRequestBuilder = new HttpRequestBuilder();
         this.httpClient         = HttpClient.newHttpClient();
-        this.omegaCodexLogger   = new OmegaCodexLogger();
+        this.omegaCodexUtil     = new OmegaCodexUtil();
+        this.taskRunner         = new TaskRunner( 200 );
     }
 
     EmbeddingApiService(
-            String apiEndPoint, String apiKeyName, String model, int inputLimit, Dotenv dotenv,
-            HttpRequestBuilder httpRequestBuilder, HttpClient httpClient, OmegaCodexLogger omegaCodexLogger )
+            String apiEndPoint, String apiKeyVarName, String model, int inputLimit, Environment environment,
+            HttpRequestBuilder httpRequestBuilder, HttpClient httpClient, OmegaCodexUtil omegaCodexUtil,
+            TaskRunner taskRunner )
     {
         this.apiEndPoint        = apiEndPoint;
-        this.apiKeyName         = apiKeyName;
+        this.apiKeyVarName      = apiKeyVarName;
         this.model              = model;
         this.inputLimit         = inputLimit;
-        this.dotenv             = dotenv;
+        this.environment        = environment;
         this.httpRequestBuilder = httpRequestBuilder;
         this.httpClient         = httpClient;
-        this.omegaCodexLogger   = omegaCodexLogger;
+        this.omegaCodexUtil     = omegaCodexUtil;
+        this.taskRunner         = taskRunner;
     }
 
-    double[] getEmbedding( String input )
+    double[] getEmbeddingVector( String input )
     {
         if ( input == null ) throw new IllegalArgumentException( "Input must not be null." );
         if ( input.isEmpty() ) throw new IllegalArgumentException( "Input must not be empty." );
@@ -79,13 +81,8 @@ class EmbeddingApiService
             throw new IllegalArgumentException( message );
         }
 
-        String apiKey = this.dotenv.get( this.apiKeyName );
-        if ( apiKey == null )
-        {
-            throw new IllegalStateException( "Missing required environment variable: " + this.apiKeyName );
-        }
-
-        this.omegaCodexLogger.log( String.format( "Embedding API Call, Starting, Input Length: %,d", input.length() ));
+        String taskName = "Embedding API Call";
+        String startMessage = String.format( "Input Length: %,d", input.length() );
 
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -100,23 +97,12 @@ class EmbeddingApiService
         HttpRequest request = this.httpRequestBuilder.reset()
                 .uri( this.apiEndPoint )
                 .header( "Content-Type", "application/json" )
-                .header( "Authorization", "Bearer " + apiKey )
+                .header( "Authorization", "Bearer " + this.environment.getString( this.apiKeyVarName ))
                 .POST( requestString )
                 .build();
 
-        long start = System.nanoTime();
-
-        HttpResponse< String > response;
-        try { response = this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ); }
-        catch ( IOException e ) { throw new OmegaCodexException( "IOException in embedding API call.", e ); }
-        catch ( InterruptedException e )
-        {
-            Thread.currentThread().interrupt();
-            throw new OmegaCodexException( e );
-        }
-
-        long end = System.nanoTime();
-        long deltaMs = ( end - start ) / 1_000_000;
+        HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, () ->
+                this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
 
         int statusCode = response.statusCode();
         String responseBody = response.body();
@@ -137,12 +123,11 @@ class EmbeddingApiService
         catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
 
         int totalTokens = rootNode.path( "usage" ).path( "total_tokens" ).intValue();
-        this.omegaCodexLogger.log(
-                String.format( "Embedding API Call, Complete, Tokens: %,d, Duration: %,d ms", totalTokens, deltaMs ));
+        this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", taskName, totalTokens ));
 
         JsonNode embeddingNode = rootNode.path( "data" ).get( 0 ).path( "embedding" );
-        double[] embedding = new double[ embeddingNode.size() ];
-        for ( int i = 0; i < embeddingNode.size(); i++ ) embedding[ i ] = embeddingNode.get( i ).asDouble();
-        return embedding;
+        double[] vector = new double[ embeddingNode.size() ];
+        for ( int i = 0; i < embeddingNode.size(); i++ ) vector[ i ] = embeddingNode.get( i ).asDouble();
+        return vector;
     }
 }

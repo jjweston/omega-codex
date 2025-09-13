@@ -25,14 +25,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
 class EmbeddingServiceTest
 {
-    private final String   testString    = "Test";
-    private final double[] testEmbedding = { -0.75, -0.5, 0.5, 0.75 };
+    private final String    testString    = "Test";
+    private final Embedding testEmbedding = new Embedding( 42, new double[] { -0.75, -0.5, 0.5, 0.75 } );
 
     @Mock private EmbeddingCacheService mockEmbeddingCacheService;
     @Mock private EmbeddingApiService   mockEmbeddingApiService;
@@ -49,17 +49,21 @@ class EmbeddingServiceTest
     void testGetEmbedding_cacheHit()
     {
         when( this.mockEmbeddingCacheService.getEmbedding( this.testString )).thenReturn( this.testEmbedding );
-        double[] actualEmbedding = this.embeddingService.getEmbedding( this.testString );
-        assertThat( actualEmbedding ).as( "Embedding" ).containsExactly( this.testEmbedding );
+        Embedding actualEmbedding = this.embeddingService.getEmbedding( this.testString );
+        assertEquals( this.testEmbedding.id(), actualEmbedding.id() );
+        assertThat( actualEmbedding.vector() ).as( "Vector" ).containsExactly( this.testEmbedding.vector() );
     }
 
     @Test
     void testGetEmbedding_cacheMiss()
     {
         when( this.mockEmbeddingCacheService.getEmbedding( this.testString )).thenReturn( null );
-        when( this.mockEmbeddingApiService.getEmbedding( this.testString )).thenReturn( this.testEmbedding );
-        double[] actualEmbedding = this.embeddingService.getEmbedding( this.testString );
-        assertThat( actualEmbedding ).as( "Embedding" ).containsExactly( this.testEmbedding );
-        verify( this.mockEmbeddingCacheService ).setEmbedding( this.testString, this.testEmbedding );
+        when( this.mockEmbeddingApiService.getEmbeddingVector( this.testString )).
+                thenReturn( this.testEmbedding.vector() );
+        when( this.mockEmbeddingCacheService.setEmbedding( this.testString, this.testEmbedding.vector() ))
+                .thenReturn( this.testEmbedding.id() );
+        Embedding actualEmbedding = this.embeddingService.getEmbedding( this.testString );
+        assertEquals( this.testEmbedding.id(), actualEmbedding.id() );
+        assertThat( actualEmbedding.vector() ).as( "Vector" ).containsExactly( this.testEmbedding.vector() );
     }
 }

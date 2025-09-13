@@ -32,28 +32,28 @@ public class Embed
         String input = "Omega Codex is an AI assistant for developers.";
         System.out.println( "Input: " + input );
 
-        double[] embedding = Embed.getEmbedding( input );
-        String embeddingString;
+        double[] vector = Embed.getEmbeddingVector( input );
+        String vectorString;
         ObjectMapper objectMapper = new ObjectMapper();
-        try { embeddingString = objectMapper.writeValueAsString( embedding ); }
+        try { vectorString = objectMapper.writeValueAsString( vector ); }
         catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
 
-        if ( embeddingString.length() > embeddingStringLimit )
+        if ( vectorString.length() > embeddingStringLimit )
         {
-            embeddingString = embeddingString.substring( 0, embeddingStringLimit ) + "...";
+            vectorString = vectorString.substring( 0, embeddingStringLimit ) + "...";
         }
 
-        System.out.println( "Embedding: " + embeddingString );
+        System.out.println( "Vector: " + vectorString );
     }
 
-    private static double[] getEmbedding( String input )
+    private static double[] getEmbeddingVector( String input )
     {
         SQLiteConnectionFactory sqLiteConnectionFactory = new SQLiteConnectionFactory();
         try ( Connection connection = sqLiteConnectionFactory.create() )
         {
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
             EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService );
-            return embeddingService.getEmbedding( input );
+            return embeddingService.getEmbedding( input ).vector();
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to close database connection.", e ); }
     }

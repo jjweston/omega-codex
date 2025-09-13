@@ -34,7 +34,7 @@ public class EmbeddingCacheServiceIT
     void testCache() throws Exception
     {
         String testInput = "This is a test input.";
-        double[] testEmbedding = { -0.75, -0.5, 0.5, 0.75 };
+        double[] testVector = { -0.75, -0.5, 0.5, 0.75 };
 
         String databaseUrl = "jdbc:sqlite::memory:";
         SQLiteDataSource dataSource = new SQLiteDataSource();
@@ -44,12 +44,14 @@ public class EmbeddingCacheServiceIT
         {
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
             Assertions.assertNull( embeddingCacheService.getEmbedding( testInput ));
-            embeddingCacheService.setEmbedding( testInput, testEmbedding );
-            double[] cachedEmbedding = embeddingCacheService.getEmbedding( testInput );
-            assertThat( cachedEmbedding ).as( "Embedding" ).containsExactly( testEmbedding );
+            long id = embeddingCacheService.setEmbedding( testInput, testVector );
+            assertEquals( testInput, embeddingCacheService.getInput( id ));
+            Embedding cachedEmbedding = embeddingCacheService.getEmbedding( testInput );
+            assertEquals( id, cachedEmbedding.id() );
+            assertThat( cachedEmbedding.vector() ).as( "Vector" ).containsExactly( testVector );
 
             IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                    () -> embeddingCacheService.setEmbedding( testInput, testEmbedding ));
+                    () -> embeddingCacheService.setEmbedding( testInput, testVector ) );
 
             assertEquals( "Input must not be a duplicate.", exception.getMessage() );
         }
