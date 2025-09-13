@@ -23,10 +23,12 @@ import io.qdrant.client.QdrantClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class QdrantServiceIT
 {
@@ -79,7 +81,9 @@ public class QdrantServiceIT
 
     private float[] getVector( String fileName ) throws Exception
     {
-        double[] vector = this.objectMapper.readValue( this.getClass().getResource( fileName ), double[].class );
+        URL resource = this.getClass().getResource( fileName );
+        assertNotNull( resource );
+        double[] vector = this.objectMapper.readValue( resource.openStream(), double[].class );
         return OmegaCodexUtil.convertVector( vector );
     }
 }
