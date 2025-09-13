@@ -29,22 +29,22 @@ import java.sql.Statement;
 
 class EmbeddingCacheService
 {
-    private final Connection connection;
-    private final OmegaCodexLogger omegaCodexLogger;
+    private final Connection     connection;
+    private final OmegaCodexUtil omegaCodexUtil;
 
     EmbeddingCacheService( Connection connection )
     {
-        this( connection, new OmegaCodexLogger() );
+        this( connection, new OmegaCodexUtil() );
     }
 
-    EmbeddingCacheService( Connection connection, OmegaCodexLogger omegaCodexLogger )
+    EmbeddingCacheService( Connection connection, OmegaCodexUtil omegaCodexUtil )
     {
-        this.connection       = connection;
-        this.omegaCodexLogger = omegaCodexLogger;
+        this.connection     = connection;
+        this.omegaCodexUtil = omegaCodexUtil;
         this.init();
     }
 
-    double[] getEmbedding( String input )
+    Embedding getEmbedding( String input )
     {
         if ( input == null ) throw new IllegalArgumentException( "Input must not be null." );
         if ( input.isEmpty() ) throw new IllegalArgumentException( "Input must not be empty." );
@@ -52,43 +52,44 @@ class EmbeddingCacheService
         try
         {
             PreparedStatement statement = this.connection.prepareStatement(
-                    "SELECT Embedding FROM Embeddings WHERE input = ?" );
+                    "SELECT Id, Vector FROM Embeddings WHERE Input = ?" );
             statement.setString( 1, input );
             ResultSet result = statement.executeQuery();
 
             if ( result.next() )
             {
-                String embeddingString = result.getString( "Embedding" );
+                long id = result.getLong( "Id" );
+                String vectorString = result.getString( "Vector" );
                 ObjectMapper objectMapper = new ObjectMapper();
-                try { return objectMapper.readValue( embeddingString, double[].class ); }
+                try { return new Embedding( id, objectMapper.readValue( vectorString, double[].class )); }
                 catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
             }
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to query Embeddings table.", e ); }
+        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get embedding.", e ); }
 
         return null;
     }
 
-    void setEmbedding( String input, double[] embedding )
+    long setEmbedding( String input, double[] vector )
     {
         if ( input == null ) throw new IllegalArgumentException( "Input must not be null." );
         if ( input.isEmpty() ) throw new IllegalArgumentException( "Input must not be empty." );
 
-        if ( embedding == null ) throw new IllegalArgumentException( "Embedding must not be null." );
-        if ( embedding.length == 0 ) throw new IllegalArgumentException( "Embedding must not be empty." );
+        if ( vector == null ) throw new IllegalArgumentException( "Vector must not be null." );
+        if ( vector.length == 0 ) throw new IllegalArgumentException( "Vector must not be empty." );
 
-        String embeddingString;
+        String vectorString;
         ObjectMapper objectMapper = new ObjectMapper();
-        try { embeddingString = objectMapper.writeValueAsString( embedding ); }
+        try { vectorString = objectMapper.writeValueAsString( vector ); }
         catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
 
         try
         {
             PreparedStatement statement = this.connection.prepareStatement(
-                    "INSERT OR IGNORE INTO Embeddings ( Input, Embedding ) VALUES ( ?, ? )",
+                    "INSERT OR IGNORE INTO Embeddings ( Input, Vector ) VALUES ( ?, ? )",
                     Statement.RETURN_GENERATED_KEYS );
             statement.setString( 1, input );
-            statement.setString( 2, embeddingString );
+            statement.setString( 2, vectorString );
 
             if ( statement.executeUpdate() == 0 )
             {
@@ -99,11 +100,28 @@ class EmbeddingCacheService
             if ( generatedKeys.next() )
             {
                 long id = generatedKeys.getLong( 1 );
-                this.omegaCodexLogger.log( String.format( "Cache New Embedding, ID: %,d", id ));
+                this.omegaCodexUtil.println( String.format( "Cache New Embedding, ID: %,d", id ));
+                return id;
             }
             else throw new OmegaCodexException( "Failed to get ID of added embedding." );
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to insert into Embeddings table.", e ); }
+    }
+
+    String getInput( long id )
+    {
+        try
+        {
+            PreparedStatement statement = this.connection.prepareStatement(
+                    "SELECT Input FROM Embeddings WHERE Id = ?" );
+            statement.setLong( 1, id );
+            ResultSet result = statement.executeQuery();
+
+            if ( result.next() ) return result.getString( "Input" );
+        }
+        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get input.", e ); }
+
+        throw new OmegaCodexException( String.format( "Unable to find embedding with id: %,d", id ));
     }
 
     private void init()
@@ -113,9 +131,9 @@ class EmbeddingCacheService
             PreparedStatement statement = this.connection.prepareStatement( """
                     CREATE TABLE IF NOT EXISTS Embeddings
                     (
-                        Id        INTEGER PRIMARY KEY AUTOINCREMENT,
-                        Input     TEXT    UNIQUE NOT NULL,
-                        Embedding TEXT           NOT NULL
+                        Id     INTEGER PRIMARY KEY AUTOINCREMENT,
+                        Input  TEXT    UNIQUE NOT NULL,
+                        Vector TEXT           NOT NULL
                     )
                     """ );
             statement.execute();

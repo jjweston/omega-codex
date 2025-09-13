@@ -40,9 +40,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith( MockitoExtension.class )
 class EmbeddingCacheServiceTest
 {
-    private final double[] testEmbedding = { -0.75, -0.5, 0.5, 0.75 };
+    private final Embedding testEmbedding = new Embedding( 42, new double[] { -0.75, -0.5, 0.5, 0.75 } );
 
-    @Mock private OmegaCodexLogger  mockOmegaCodexLogger;
+    @Mock private OmegaCodexUtil    omegaCodexUtil;
     @Mock private Connection        mockConnection;
     @Mock private PreparedStatement mockPreparedStatement;
     @Mock private ResultSet         mockResultSet;
@@ -53,7 +53,7 @@ class EmbeddingCacheServiceTest
     void setUp() throws Exception
     {
         when( this.mockConnection.prepareStatement( any() )).thenReturn( this.mockPreparedStatement );
-        this.embeddingCacheService = new EmbeddingCacheService( this.mockConnection, this.mockOmegaCodexLogger );
+        this.embeddingCacheService = new EmbeddingCacheService( this.mockConnection, this.omegaCodexUtil );
     }
 
     @Test
@@ -78,15 +78,17 @@ class EmbeddingCacheServiceTest
     void testGetEmbedding_cacheHit() throws Exception
     {
         ObjectMapper objectMapper = new ObjectMapper();
-        String embeddingString = objectMapper.writeValueAsString( this.testEmbedding );
+        String vectorString = objectMapper.writeValueAsString( this.testEmbedding.vector() );
 
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( true );
-        when ( this.mockResultSet.getString( "Embedding" )).thenReturn( embeddingString );
+        when ( this.mockResultSet.getLong( "Id" )).thenReturn( this.testEmbedding.id() );
+        when ( this.mockResultSet.getString( "Vector" )).thenReturn( vectorString );
 
-        double[] actualEmbedding = this.embeddingCacheService.getEmbedding( "Test" );
+        Embedding actualEmbedding = this.embeddingCacheService.getEmbedding( "Test" );
 
-        assertThat( actualEmbedding ).as( "Embedding" ).containsExactly( this.testEmbedding );
+        assertEquals( this.testEmbedding.id(), actualEmbedding.id() );
+        assertThat( actualEmbedding.vector() ).as( "Vector" ).containsExactly( this.testEmbedding.vector() );
     }
 
     @Test
@@ -95,7 +97,7 @@ class EmbeddingCacheServiceTest
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( false );
 
-        double[] actualEmbedding = this.embeddingCacheService.getEmbedding( "Test" );
+        Embedding actualEmbedding = this.embeddingCacheService.getEmbedding( "Test" );
 
         assertNull( actualEmbedding );
     }
@@ -104,7 +106,7 @@ class EmbeddingCacheServiceTest
     void testSetEmbedding_nullInput()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( null, this.testEmbedding ));
+                () -> this.embeddingCacheService.setEmbedding( null, this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be null.", exception.getMessage() );
     }
@@ -113,31 +115,31 @@ class EmbeddingCacheServiceTest
     void testSetEmbedding_emptyInput()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "", this.testEmbedding ));
+                () -> this.embeddingCacheService.setEmbedding( "", this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be empty.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_nullEmbedding()
+    void testSetEmbedding_nullVector()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> this.embeddingCacheService.setEmbedding( "Test", null ));
 
-        assertEquals( "Embedding must not be null.", exception.getMessage() );
+        assertEquals( "Vector must not be null.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_emptyEmbedding()
+    void testSetEmbedding_emptyVector()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> this.embeddingCacheService.setEmbedding( "Test", new double[] {} ));
 
-        assertEquals( "Embedding must not be empty.", exception.getMessage() );
+        assertEquals( "Vector must not be empty.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_newEmbedding() throws Exception
+    void testSetEmbedding_newInput() throws Exception
     {
         //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
@@ -145,19 +147,43 @@ class EmbeddingCacheServiceTest
         when( this.mockPreparedStatement.getGeneratedKeys() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( true );
         when( this.mockResultSet.getLong( 1 )).thenReturn( 42L );
-        this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding );
+        assertEquals( 42, this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
     }
 
     @Test
-    void testSetEmbedding_duplicateEmbedding() throws Exception
+    void testSetEmbedding_duplicateInput() throws Exception
     {
         //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
         when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 0 );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding ));
+                () -> this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be a duplicate.", exception.getMessage() );
+    }
+
+    @Test
+    void testGetInput_notFound() throws Exception
+    {
+        when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
+        when( this.mockResultSet.next() ).thenReturn( false );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.embeddingCacheService.getInput( 1_234 ));
+
+        assertEquals( "Unable to find embedding with id: 1,234", exception.getMessage() );
+    }
+
+    @Test
+    void testGetInput_success() throws Exception
+    {
+        String testInput = "Test Input";
+
+        when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
+        when( this.mockResultSet.next() ).thenReturn( true );
+        when ( this.mockResultSet.getString( "Input" )).thenReturn( testInput );
+
+        assertEquals( testInput, this.embeddingCacheService.getInput( 42 ));
     }
 }
