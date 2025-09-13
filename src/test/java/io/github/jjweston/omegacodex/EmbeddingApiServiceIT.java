@@ -25,6 +25,7 @@ import java.net.URL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class EmbeddingApiServiceIT
 {
@@ -35,8 +36,9 @@ public class EmbeddingApiServiceIT
         double similarityThreshold = 0.99999;
 
         URL resource = this.getClass().getResource( this.getClass().getSimpleName() + ".json" );
+        assertNotNull( resource );
         ObjectMapper objectMapper = new ObjectMapper();
-        double[] expectedVector = objectMapper.readValue( resource, double[].class );
+        double[] expectedVector = objectMapper.readValue( resource.openStream(), double[].class );
 
         EmbeddingApiService embeddingApiService = new EmbeddingApiService();
         double[] actualVector = embeddingApiService.getEmbeddingVector( input );
