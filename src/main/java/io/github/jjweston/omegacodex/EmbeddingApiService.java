@@ -69,7 +69,7 @@ class EmbeddingApiService
         this.taskRunner         = taskRunner;
     }
 
-    double[] getEmbeddingVector( String input )
+    ImmutableDoubleArray getEmbeddingVector( String input )
     {
         if ( input == null ) throw new IllegalArgumentException( "Input must not be null." );
         if ( input.isEmpty() ) throw new IllegalArgumentException( "Input must not be empty." );
@@ -131,6 +131,6 @@ class EmbeddingApiService
         JsonNode embeddingNode = responseNode.path( "data" ).get( 0 ).path( "embedding" );
         double[] vector = new double[ embeddingNode.size() ];
         for ( int i = 0; i < embeddingNode.size(); i++ ) vector[ i ] = embeddingNode.get( i ).asDouble();
-        return vector;
+        return new ImmutableDoubleArray( vector );
     }
 }

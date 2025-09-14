@@ -18,24 +18,21 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.qdrant.client.QdrantClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-import java.net.URL;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class QdrantServiceIT
 {
     private final String              collectionName      = "omegacodex_chunks_test";
     private final QdrantClientFactory qdrantClientFactory = new QdrantClientFactory();
     private final TaskRunner          taskRunner          = new TaskRunner( 200 );
-    private final ObjectMapper        objectMapper        = new ObjectMapper();
 
     @AfterEach
     void tearDown()
@@ -67,23 +64,24 @@ public class QdrantServiceIT
         {
             for ( int i = 0; i < inputCount; i++ )
             {
-                String fileName = String.format( "%s-input-%d.json", className, i );
+                String resourceName = String.format( "%s-input-%d.json", className, i );
                 long id = i + 1;
-                float[] vector = this.getVector( fileName );
-                qdrantService.upsert( id, vector );
+                ImmutableDoubleArray inputVector = this.getVector( resourceName );
+                qdrantService.upsert( id, inputVector );
             }
 
-            float[] queryVector = this.getVector( className + "-query.json" );
+            String resourceName = className + "-query.json";
+            ImmutableDoubleArray queryVector = this.getVector( resourceName );
             List< SearchResult > actualResults = qdrantService.search( queryVector );
             assertThat( actualResults ).as( "Search Results" ).containsExactlyElementsOf( expectedResults );
         }
     }
 
-    private float[] getVector( String fileName ) throws Exception
+    private ImmutableDoubleArray getVector( String resourceName ) throws Exception
     {
-        URL resource = this.getClass().getResource( fileName );
-        assertNotNull( resource );
-        double[] vector = this.objectMapper.readValue( resource.openStream(), double[].class );
-        return OmegaCodexUtil.convertVector( vector );
+        try ( InputStream resourceStream = this.getClass().getResourceAsStream( resourceName ))
+        {
+            return ImmutableDoubleArray.fromInputStream( resourceStream );
+        }
     }
 }

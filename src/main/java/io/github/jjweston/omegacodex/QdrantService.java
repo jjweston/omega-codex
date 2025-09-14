@@ -62,7 +62,7 @@ class QdrantService implements AutoCloseable
         this.qdrantClient.close();
     }
 
-    void upsert( long id, float[] vector )
+    void upsert( long id, ImmutableDoubleArray vector )
     {
         this.validateVector( vector );
 
@@ -70,14 +70,14 @@ class QdrantService implements AutoCloseable
 
         Points.PointStruct point = Points.PointStruct.newBuilder()
                 .setId( id( id ))
-                .setVectors( VectorsFactory.vectors( vector ))
+                .setVectors( VectorsFactory.vectors( vector.toFloatArray() ))
                 .build();
 
         this.taskRunner.run( taskName, () ->
                 this.qdrantClient.upsertAsync( this.collectionName, List.of( point )).get() );
     }
 
-    List< SearchResult > search( float[] vector )
+    List< SearchResult > search( ImmutableDoubleArray vector )
     {
         this.validateVector( vector );
 
@@ -85,7 +85,7 @@ class QdrantService implements AutoCloseable
 
         Points.QueryPoints query = Points.QueryPoints.newBuilder()
                 .setCollectionName( this.collectionName )
-                .setQuery( nearest( vector ))
+                .setQuery( nearest( vector.toFloatArray() ))
                 .build();
 
         List< Points.ScoredPoint > points = this.taskRunner.get( taskName, () ->
@@ -123,14 +123,14 @@ class QdrantService implements AutoCloseable
                 this.qdrantClient.createCollectionAsync( this.collectionName, vectorParams ).get() );
     }
 
-    private void validateVector( float[] vector )
+    private void validateVector( ImmutableDoubleArray vector )
     {
         if ( vector == null ) throw new IllegalArgumentException( "Vector must not be null." );
 
-        if ( vector.length != this.collectionSize )
+        if ( vector.length() != this.collectionSize )
         {
             throw new IllegalArgumentException( String.format(
-                    "Vector length must be %,d. Actual Length: %,d", this.collectionSize, vector.length ));
+                    "Vector length must be %,d. Actual Length: %,d", this.collectionSize, vector.length() ));
         }
     }
 }

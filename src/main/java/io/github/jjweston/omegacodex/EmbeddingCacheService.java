@@ -18,15 +18,11 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 
 class EmbeddingCacheService
 {
@@ -61,12 +57,7 @@ class EmbeddingCacheService
             {
                 long id = result.getLong( "Id" );
                 String vectorString = result.getString( "Vector" );
-                ObjectMapper objectMapper = new ObjectMapper();
-                try { return new Embedding( id, objectMapper.readValue( vectorString, double[].class )); }
-                catch ( JsonProcessingException e )
-                {
-                    throw new OmegaCodexException( "Failed to deserialize vector: " + vectorString, e );
-                }
+                return new Embedding( id, ImmutableDoubleArray.fromString( vectorString ));
             }
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get embedding.", e ); }
@@ -74,21 +65,13 @@ class EmbeddingCacheService
         return null;
     }
 
-    long setEmbedding( String input, double[] vector )
+    long setEmbedding( String input, ImmutableDoubleArray vector )
     {
         if ( input == null ) throw new IllegalArgumentException( "Input must not be null." );
         if ( input.isEmpty() ) throw new IllegalArgumentException( "Input must not be empty." );
 
         if ( vector == null ) throw new IllegalArgumentException( "Vector must not be null." );
-        if ( vector.length == 0 ) throw new IllegalArgumentException( "Vector must not be empty." );
-
-        String vectorString;
-        ObjectMapper objectMapper = new ObjectMapper();
-        try { vectorString = objectMapper.writeValueAsString( vector ); }
-        catch ( JsonProcessingException e )
-        {
-            throw new OmegaCodexException( "Failed to serialize vector: " + Arrays.toString( vector ), e );
-        }
+        if ( vector.length() == 0 ) throw new IllegalArgumentException( "Vector must not be empty." );
 
         try
         {
@@ -96,7 +79,7 @@ class EmbeddingCacheService
                     "INSERT OR IGNORE INTO Embeddings ( Input, Vector ) VALUES ( ?, ? )",
                     Statement.RETURN_GENERATED_KEYS );
             statement.setString( 1, input );
-            statement.setString( 2, vectorString );
+            statement.setString( 2, vector.toString() );
 
             if ( statement.executeUpdate() == 0 )
             {

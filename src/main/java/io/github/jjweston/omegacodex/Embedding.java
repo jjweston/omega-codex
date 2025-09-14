@@ -18,6 +18,6 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-record Embedding( long id, double[] vector )
+record Embedding( long id, ImmutableDoubleArray vector )
 {
 }

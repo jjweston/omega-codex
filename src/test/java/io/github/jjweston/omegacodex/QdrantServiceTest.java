@@ -101,10 +101,10 @@ public class QdrantServiceTest
     @Test
     void upsert_incorrectVectorLength() throws Exception
     {
-        int     expectedCollectionSize = 1_234;
-        int     actualCollectionSize   = 1_024;
-        long    testId                 = 42;
-        float[] testVector             = new float[ actualCollectionSize ];
+        int                  expectedCollectionSize = 1_234;
+        int                  actualCollectionSize   = 1_024;
+        long                 testId                 = 42;
+        ImmutableDoubleArray testVector             = new ImmutableDoubleArray( new double[ actualCollectionSize ] );
 
         this.mockInit( expectedCollectionSize );
 
@@ -124,11 +124,11 @@ public class QdrantServiceTest
     void upsert_success() throws Exception
     {
         long testId = 42;
-        float[] testVector = new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
+        ImmutableDoubleArray testVector = new ImmutableDoubleArray( new double[]{ 0.1f, 0.2f, 0.3f, 0.4f, 0.5f } );
 
         Points.PointStruct testPoint = Points.PointStruct.newBuilder()
                 .setId( id( testId ))
-                .setVectors( VectorsFactory.vectors( testVector ))
+                .setVectors( VectorsFactory.vectors( testVector.toFloatArray() ))
                 .build();
 
         this.mockInit( this.testCollectionSize );
@@ -162,9 +162,9 @@ public class QdrantServiceTest
     @Test
     void search_incorrectVectorLength() throws Exception
     {
-        int     expectedCollectionSize = 5_678;
-        int     actualCollectionSize   = 2_048;
-        float[] testVector             = new float[ actualCollectionSize ];
+        int                  expectedCollectionSize = 5_678;
+        int                  actualCollectionSize   = 2_048;
+        ImmutableDoubleArray testVector             = new ImmutableDoubleArray( new double[ actualCollectionSize ] );
 
         this.mockInit( expectedCollectionSize );
 
@@ -183,7 +183,7 @@ public class QdrantServiceTest
     @Test
     void search_success() throws Exception
     {
-        float[] testVector = new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f };
+        ImmutableDoubleArray testVector = new ImmutableDoubleArray( new double[]{ 0.1f, 0.2f, 0.3f, 0.4f, 0.5f } );
 
         long testId1 = 42;
         long testId2 = 13;
@@ -200,7 +200,7 @@ public class QdrantServiceTest
 
         Points.QueryPoints testQuery = Points.QueryPoints.newBuilder()
                 .setCollectionName( this.testCollectionName )
-                .setQuery( nearest( testVector ))
+                .setQuery( nearest( testVector.toFloatArray() ))
                 .build();
 
         List< Points.ScoredPoint > testScoredPoints = new LinkedList<>();

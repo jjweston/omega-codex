@@ -49,12 +49,11 @@ public class Qdrant
             for ( String inputString : inputStrings )
             {
                 Embedding inputEmbedding = embeddingService.getEmbedding( inputString );
-                qdrantService.upsert( inputEmbedding.id(), OmegaCodexUtil.convertVector( inputEmbedding.vector() ));
+                qdrantService.upsert( inputEmbedding.id(), inputEmbedding.vector() );
             }
 
             Embedding queryEmbedding = embeddingService.getEmbedding( queryString );
-            List< SearchResult > searchResults =
-                    qdrantService.search( OmegaCodexUtil.convertVector( queryEmbedding.vector() ));
+            List< SearchResult > searchResults = qdrantService.search( queryEmbedding.vector() );
 
             for (  SearchResult searchResult : searchResults )
             {
