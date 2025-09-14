@@ -125,17 +125,20 @@ class MarkdownSplitter
             throw new OmegaCodexException( exceptionMessage.toString() );
         }
 
-        String jsonOutput = String.join( "\n", stdoutReader.getLines() );
+        String responseString = String.join( "\n", stdoutReader.getLines() );
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode jsonNode;
-        try { jsonNode = objectMapper.readTree( jsonOutput ); }
-        catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
+        JsonNode responseNode;
+        try { responseNode = objectMapper.readTree( responseString ); }
+        catch ( JsonProcessingException e )
+        {
+            throw new OmegaCodexException( String.format( "Failed to deserialize response:%n%s", responseString ), e );
+        }
 
         List< String > chunks = new LinkedList<>();
         StringBuilder chunk = new StringBuilder();
         Map< String, String > previousMetadata = null;
 
-        for ( JsonNode element : jsonNode )
+        for ( JsonNode element : responseNode )
         {
             String currentChunk = element.path( "content" ).asText();
             Map< String, String > currentMetadata = element.path( "metadata" ).propertyStream()
