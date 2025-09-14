@@ -41,11 +41,4 @@ class OmegaCodexUtil
     {
         Thread.sleep( millis );
     }
-
-    static float[] convertVector( double[] doubleVector )
-    {
-        float[] floatVector = new float[ doubleVector.length ];
-        for ( int i = 0; i < doubleVector.length; i++ ) floatVector[ i ] = (float) doubleVector[ i ];
-        return floatVector;
-    }
 }

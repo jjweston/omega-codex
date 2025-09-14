@@ -39,7 +39,7 @@ class EmbeddingService
         Embedding embedding = this.embeddingCacheService.getEmbedding( input );
         if ( embedding != null ) return embedding;
 
-        double[] vector = this.embeddingApiService.getEmbeddingVector( input );
+        ImmutableDoubleArray vector = this.embeddingApiService.getEmbeddingVector( input );
         long id = this.embeddingCacheService.setEmbedding( input, vector );
         return new Embedding( id, vector );
     }

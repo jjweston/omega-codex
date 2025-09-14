@@ -18,14 +18,12 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import java.net.URL;
+import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class EmbeddingApiServiceIT
 {
@@ -35,17 +33,20 @@ public class EmbeddingApiServiceIT
         String input = "This is an automated integration test for calling the OpenAI Embedding API.";
         double similarityThreshold = 0.99999;
 
-        URL resource = this.getClass().getResource( this.getClass().getSimpleName() + ".json" );
-        assertNotNull( resource );
-        ObjectMapper objectMapper = new ObjectMapper();
-        double[] expectedVector = objectMapper.readValue( resource.openStream(), double[].class );
+        String resourceName = this.getClass().getSimpleName() + ".json";
+
+        ImmutableDoubleArray expectedVector;
+        try ( InputStream resourceStream = this.getClass().getResourceAsStream( resourceName ))
+        {
+            expectedVector = ImmutableDoubleArray.fromInputStream( resourceStream );
+        }
 
         EmbeddingApiService embeddingApiService = new EmbeddingApiService();
-        double[] actualVector = embeddingApiService.getEmbeddingVector( input );
+        ImmutableDoubleArray actualVector = embeddingApiService.getEmbeddingVector( input );
 
-        assertEquals( expectedVector.length, actualVector.length, "Unexpected vector length." );
+        assertEquals( expectedVector.length(), actualVector.length(), "Vector Length" );
 
-        double similarity = this.cosineSimilarity( expectedVector, actualVector );
+        double similarity = this.cosineSimilarity( expectedVector.getArray(), actualVector.getArray() );
         System.out.printf( "Cosine Similarity: %.10f%n", similarity );
         assertThat( similarity ).as( "Cosine Similarity" ).isGreaterThanOrEqualTo( similarityThreshold );
     }

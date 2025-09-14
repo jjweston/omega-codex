@@ -24,7 +24,6 @@ import org.sqlite.SQLiteDataSource;
 
 import java.sql.Connection;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
@@ -34,7 +33,7 @@ public class EmbeddingCacheServiceIT
     void testCache() throws Exception
     {
         String testInput = "This is a test input.";
-        double[] testVector = { -0.75, -0.5, 0.5, 0.75 };
+        ImmutableDoubleArray testVector = new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } );
 
         String databaseUrl = "jdbc:sqlite::memory:";
         SQLiteDataSource dataSource = new SQLiteDataSource();
@@ -46,9 +45,9 @@ public class EmbeddingCacheServiceIT
             Assertions.assertNull( embeddingCacheService.getEmbedding( testInput ));
             long id = embeddingCacheService.setEmbedding( testInput, testVector );
             assertEquals( testInput, embeddingCacheService.getInput( id ));
+            Embedding expectedEmbedding = new Embedding( id, testVector );
             Embedding cachedEmbedding = embeddingCacheService.getEmbedding( testInput );
-            assertEquals( id, cachedEmbedding.id() );
-            assertThat( cachedEmbedding.vector() ).as( "Vector" ).containsExactly( testVector );
+            assertEquals( expectedEmbedding, cachedEmbedding );
 
             IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                     () -> embeddingCacheService.setEmbedding( testInput, testVector ) );

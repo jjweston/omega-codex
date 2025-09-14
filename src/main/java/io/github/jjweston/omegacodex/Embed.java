@@ -18,39 +18,29 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
 
 public class Embed
 {
     public static void main( String[] args )
     {
-        int embeddingStringLimit = 50;
+        int vectorStringLimit = 50;
         String input = "Omega Codex is an AI assistant for developers.";
         System.out.println( "Input: " + input );
 
-        double[] vector = Embed.getEmbeddingVector( input );
-        String vectorString;
-        ObjectMapper objectMapper = new ObjectMapper();
-        try { vectorString = objectMapper.writeValueAsString( vector ); }
-        catch ( JsonProcessingException e )
-        {
-            throw new OmegaCodexException( "Failed to serialize vector: " + Arrays.toString( vector ), e );
-        }
+        ImmutableDoubleArray vector = Embed.getEmbeddingVector( input );
+        String vectorString = vector.toString();
 
-        if ( vectorString.length() > embeddingStringLimit )
+        if ( vectorString.length() > vectorStringLimit )
         {
-            vectorString = vectorString.substring( 0, embeddingStringLimit ) + "...";
+            vectorString = vectorString.substring( 0, vectorStringLimit ) + "...";
         }
 
         System.out.println( "Vector: " + vectorString );
     }
 
-    private static double[] getEmbeddingVector( String input )
+    private static ImmutableDoubleArray getEmbeddingVector( String input )
     {
         SQLiteConnectionFactory sqLiteConnectionFactory = new SQLiteConnectionFactory();
         try ( Connection connection = sqLiteConnectionFactory.create() )

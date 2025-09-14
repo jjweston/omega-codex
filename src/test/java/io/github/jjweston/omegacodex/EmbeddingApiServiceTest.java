@@ -113,9 +113,7 @@ class EmbeddingApiServiceTest
     {
         String input = "This is a test with \"quote\" characters included in it. ".repeat( 20 ).trim();
         int statusCode = 200;
-        double[] expectedVector = { -0.75, -0.5, 0.5, 0.75 };
-
-        ObjectMapper objectMapper = new ObjectMapper();
+        ImmutableDoubleArray expectedVector = new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } );
 
         String response = String.format( """
                 {
@@ -131,11 +129,11 @@ class EmbeddingApiServiceTest
                     "total_tokens" : 10
                   }
                 }
-                """, objectMapper.writeValueAsString( expectedVector ), this.testModel );
+                """, expectedVector, this.testModel );
 
         this.mockApiCall( statusCode, response );
 
-        double[] actualVector = this.embeddingApiService.getEmbeddingVector( input );
+        ImmutableDoubleArray actualVector = this.embeddingApiService.getEmbeddingVector( input );
 
         Map< String, String > expectedRequestMap = new HashMap<>();
         expectedRequestMap.put( "model", this.testModel );
@@ -143,10 +141,11 @@ class EmbeddingApiServiceTest
 
         String actualRequestString = this.requestBodyCaptor.getValue();
         TypeReference< HashMap< String, String >> typeRef = new TypeReference<>() {};
+        ObjectMapper objectMapper = new ObjectMapper();
         Map< String, String > actualRequestMap = objectMapper.readValue( actualRequestString, typeRef );
 
         assertThat( actualRequestMap ).as( "Request Map" ).containsExactlyInAnyOrderEntriesOf( expectedRequestMap );
-        assertThat( actualVector ).as( "Vector" ).containsExactly( expectedVector );
+        assertEquals( expectedVector, actualVector );
 
         verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Starting, Input Length: 1,099" );
         verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Tokens: 10" );

@@ -18,7 +18,6 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +28,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -40,7 +38,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith( MockitoExtension.class )
 class EmbeddingCacheServiceTest
 {
-    private final Embedding testEmbedding = new Embedding( 42, new double[] { -0.75, -0.5, 0.5, 0.75 } );
+    private final Embedding testEmbedding =
+            new Embedding( 42, new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } ));
 
     @Mock private OmegaCodexUtil    omegaCodexUtil;
     @Mock private Connection        mockConnection;
@@ -77,18 +76,13 @@ class EmbeddingCacheServiceTest
     @Test
     void testGetEmbedding_cacheHit() throws Exception
     {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String vectorString = objectMapper.writeValueAsString( this.testEmbedding.vector() );
-
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( true );
         when ( this.mockResultSet.getLong( "Id" )).thenReturn( this.testEmbedding.id() );
-        when ( this.mockResultSet.getString( "Vector" )).thenReturn( vectorString );
+        when ( this.mockResultSet.getString( "Vector" )).thenReturn( this.testEmbedding.vector().toString() );
 
         Embedding actualEmbedding = this.embeddingCacheService.getEmbedding( "Test" );
-
-        assertEquals( this.testEmbedding.id(), actualEmbedding.id() );
-        assertThat( actualEmbedding.vector() ).as( "Vector" ).containsExactly( this.testEmbedding.vector() );
+        assertEquals( this.testEmbedding, actualEmbedding );
     }
 
     @Test
@@ -98,7 +92,6 @@ class EmbeddingCacheServiceTest
         when( this.mockResultSet.next() ).thenReturn( false );
 
         Embedding actualEmbedding = this.embeddingCacheService.getEmbedding( "Test" );
-
         assertNull( actualEmbedding );
     }
 
@@ -133,7 +126,7 @@ class EmbeddingCacheServiceTest
     void testSetEmbedding_emptyVector()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "Test", new double[] {} ));
+                () -> this.embeddingCacheService.setEmbedding( "Test", new ImmutableDoubleArray( new double[] {} )));
 
         assertEquals( "Vector must not be empty.", exception.getMessage() );
     }
