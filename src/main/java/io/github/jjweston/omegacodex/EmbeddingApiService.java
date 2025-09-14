@@ -92,7 +92,10 @@ class EmbeddingApiService
 
         String requestString;
         try { requestString = objectMapper.writeValueAsString( requestMap ); }
-        catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
+        catch ( JsonProcessingException e )
+        {
+            throw new OmegaCodexException( "Failed to serialize request: " + requestMap, e );
+        }
 
         HttpRequest request = this.httpRequestBuilder.reset()
                 .uri( this.apiEndPoint )
@@ -105,27 +108,27 @@ class EmbeddingApiService
                 this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
 
         int statusCode = response.statusCode();
-        String responseBody = response.body();
+        String responseString = response.body();
+
+        JsonNode responseNode;
+        try { responseNode = objectMapper.readTree( responseString ); }
+        catch ( JsonProcessingException e )
+        {
+            throw new OmegaCodexException( String.format( "Failed to deserialize response:%n%s", responseString ), e );
+        }
 
         if ( statusCode != 200 )
         {
-            String message;
-            try { message = objectMapper.readTree( responseBody ).path( "error" ).path( "message" ).asText(); }
-            catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
-
+            String message = responseNode.path( "error" ).path( "message" ).asText();
             String exceptionMessage = "Error returned from embedding API. Status Code: " + statusCode;
             if ( !message.isEmpty() ) exceptionMessage += ", Message: " + message;
             throw new OmegaCodexException( exceptionMessage );
         }
 
-        JsonNode rootNode;
-        try { rootNode = objectMapper.readTree( responseBody ); }
-        catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
-
-        int totalTokens = rootNode.path( "usage" ).path( "total_tokens" ).intValue();
+        int totalTokens = responseNode.path( "usage" ).path( "total_tokens" ).intValue();
         this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", taskName, totalTokens ));
 
-        JsonNode embeddingNode = rootNode.path( "data" ).get( 0 ).path( "embedding" );
+        JsonNode embeddingNode = responseNode.path( "data" ).get( 0 ).path( "embedding" );
         double[] vector = new double[ embeddingNode.size() ];
         for ( int i = 0; i < embeddingNode.size(); i++ ) vector[ i ] = embeddingNode.get( i ).asDouble();
         return vector;

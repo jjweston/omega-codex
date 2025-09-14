@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public class Embed
 {
@@ -36,7 +37,10 @@ public class Embed
         String vectorString;
         ObjectMapper objectMapper = new ObjectMapper();
         try { vectorString = objectMapper.writeValueAsString( vector ); }
-        catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
+        catch ( JsonProcessingException e )
+        {
+            throw new OmegaCodexException( "Failed to serialize vector: " + Arrays.toString( vector ), e );
+        }
 
         if ( vectorString.length() > embeddingStringLimit )
         {

@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 
 class EmbeddingCacheService
 {
@@ -62,7 +63,10 @@ class EmbeddingCacheService
                 String vectorString = result.getString( "Vector" );
                 ObjectMapper objectMapper = new ObjectMapper();
                 try { return new Embedding( id, objectMapper.readValue( vectorString, double[].class )); }
-                catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
+                catch ( JsonProcessingException e )
+                {
+                    throw new OmegaCodexException( "Failed to deserialize vector: " + vectorString, e );
+                }
             }
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get embedding.", e ); }
@@ -81,7 +85,10 @@ class EmbeddingCacheService
         String vectorString;
         ObjectMapper objectMapper = new ObjectMapper();
         try { vectorString = objectMapper.writeValueAsString( vector ); }
-        catch ( JsonProcessingException e ) { throw new OmegaCodexException( e ); }
+        catch ( JsonProcessingException e )
+        {
+            throw new OmegaCodexException( "Failed to serialize vector: " + Arrays.toString( vector ), e );
+        }
 
         try
         {
