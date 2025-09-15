@@ -36,7 +36,7 @@ public class ImmutableDoubleArrayTest
     }
 
     @Test
-    void fromJson_nullStream()
+    void fromInputStream_nullInputStream()
     {
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
@@ -46,7 +46,7 @@ public class ImmutableDoubleArrayTest
     }
 
     @Test
-    void fromJson_nullString()
+    void fromString_nullString()
     {
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
