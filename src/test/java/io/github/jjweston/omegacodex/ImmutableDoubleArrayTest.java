@@ -36,16 +36,6 @@ public class ImmutableDoubleArrayTest
     }
 
     @Test
-    void fromInputStream_nullInputStream()
-    {
-        @SuppressWarnings( "DataFlowIssue" )
-        IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> ImmutableDoubleArray.fromInputStream( null ));
-
-        assertEquals( "Input stream must not be null.", exception.getMessage() );
-    }
-
-    @Test
     void fromString_nullString()
     {
         @SuppressWarnings( "DataFlowIssue" )

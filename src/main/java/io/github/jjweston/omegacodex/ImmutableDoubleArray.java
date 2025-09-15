@@ -21,8 +21,6 @@ package io.github.jjweston.omegacodex;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 
 class ImmutableDoubleArray
@@ -34,14 +32,6 @@ class ImmutableDoubleArray
         if ( array == null ) throw new IllegalArgumentException( "Array must not be null." );
 
         this.array = Arrays.copyOf( array, array.length );
-    }
-
-    static ImmutableDoubleArray fromInputStream( InputStream inputStream )
-    {
-        if ( inputStream == null ) throw new IllegalArgumentException( "Input stream must not be null." );
-
-        try { return ImmutableDoubleArray.fromString( new String( inputStream.readAllBytes() )); }
-        catch ( IOException e ) { throw new OmegaCodexException( "Failed to read array from input stream.", e ); }
     }
 
     static ImmutableDoubleArray fromString( String string )
