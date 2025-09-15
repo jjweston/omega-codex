@@ -20,7 +20,7 @@ package io.github.jjweston.omegacodex;
 
 class OmegaCodexUtil
 {
-    OmegaCodexUtil() { }
+    OmegaCodexUtil() {}
 
     void println( String message )
     {
