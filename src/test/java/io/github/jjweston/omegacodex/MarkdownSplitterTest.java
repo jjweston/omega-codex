@@ -229,15 +229,13 @@ class MarkdownSplitterTest
                 ]
                 """;
 
-        List< String > expectedChunks = new LinkedList<>();
-
-        expectedChunks.add( """
+        List< String > expectedChunks = List.of(
+                """
                 # Test Markdown
 
                 This is a test Markdown file.
-                """ );
-
-        expectedChunks.add( """
+                """,
+                """
                 ## Code Section
 
                 This contains code blocks.
@@ -255,9 +253,8 @@ class MarkdownSplitterTest
                 ```
 
                 This is the end of the code section.
-                """ );
-
-        expectedChunks.add( """
+                """,
+                """
                 ## Duplicate Section
 
                 This section tests duplicate headers.
