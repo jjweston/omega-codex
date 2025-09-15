@@ -200,7 +200,7 @@ limitations under the License.
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <!-- IntelliJ cannot resolve the org.mockito:mockito-core:jar property. -->
                     <!-- It is set dynamically by maven-dependency-plugin. -->
