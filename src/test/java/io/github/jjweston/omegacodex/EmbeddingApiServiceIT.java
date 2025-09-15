@@ -38,7 +38,7 @@ public class EmbeddingApiServiceIT
         ImmutableDoubleArray expectedVector;
         try ( InputStream resourceStream = this.getClass().getResourceAsStream( resourceName ))
         {
-            expectedVector = ImmutableDoubleArray.fromInputStream( resourceStream );
+            expectedVector = ImmutableDoubleArray.fromString( OmegaCodexTestUtil.readInputStream( resourceStream ));
         }
 
         EmbeddingApiService embeddingApiService = new EmbeddingApiService();

@@ -32,7 +32,7 @@ class SQLiteConnectionFactory
     private final Path workDirectory = Paths.get( "work" );
     private final Path databaseFile  = Paths.get( "omegacodex.db" );
 
-    SQLiteConnectionFactory() { }
+    SQLiteConnectionFactory() {}
 
     Connection create()
     {

@@ -18,27 +18,18 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-class OmegaCodexUtil
+import java.io.IOException;
+import java.io.InputStream;
+
+public class OmegaCodexTestUtil
 {
-    OmegaCodexUtil() {}
+    private OmegaCodexTestUtil() {}
 
-    void println( String message )
+    static String readInputStream( InputStream inputStream )
     {
-        System.out.println( message );
-    }
+        if ( inputStream == null ) throw new IllegalArgumentException( "Input stream must not be null." );
 
-    long nanoTime()
-    {
-        return System.nanoTime();
-    }
-
-    void interruptThread()
-    {
-        Thread.currentThread().interrupt();
-    }
-
-    void sleepThread( long millis ) throws InterruptedException
-    {
-        Thread.sleep( millis );
+        try { return new String( inputStream.readAllBytes() ); }
+        catch ( IOException e ) { throw new OmegaCodexException( "Failed to read from input stream.", e ); }
     }
 }
