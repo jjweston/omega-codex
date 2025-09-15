@@ -28,6 +28,7 @@ public class ImmutableDoubleArrayTest
     @Test
     void constructor_nullArray()
     {
+        @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ImmutableDoubleArray( null ));
 
@@ -37,6 +38,7 @@ public class ImmutableDoubleArrayTest
     @Test
     void fromJson_nullStream()
     {
+        @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> ImmutableDoubleArray.fromInputStream( null ));
 
@@ -46,6 +48,7 @@ public class ImmutableDoubleArrayTest
     @Test
     void fromJson_nullString()
     {
+        @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> ImmutableDoubleArray.fromString( null ));
 
