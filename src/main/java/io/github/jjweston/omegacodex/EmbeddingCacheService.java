@@ -57,7 +57,7 @@ class EmbeddingCacheService
             {
                 long id = result.getLong( "Id" );
                 String vectorString = result.getString( "Vector" );
-                return new Embedding( id, ImmutableDoubleArray.fromString( vectorString ));
+                return new Embedding( id, new ImmutableDoubleArray( vectorString ));
             }
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get embedding.", e ); }
