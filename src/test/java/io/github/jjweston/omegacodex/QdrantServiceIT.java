@@ -81,7 +81,7 @@ public class QdrantServiceIT
     {
         try ( InputStream resourceStream = this.getClass().getResourceAsStream( resourceName ))
         {
-            return ImmutableDoubleArray.fromString( OmegaCodexTestUtil.readInputStream( resourceStream ));
+            return new ImmutableDoubleArray( OmegaCodexTestUtil.readInputStream( resourceStream ));
         }
     }
 }

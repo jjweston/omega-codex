@@ -34,12 +34,12 @@ class ImmutableDoubleArray
         this.array = Arrays.copyOf( array, array.length );
     }
 
-    static ImmutableDoubleArray fromString( String string )
+    ImmutableDoubleArray( String string )
     {
         if ( string == null ) throw new IllegalArgumentException( "String must not be null." );
 
         ObjectMapper objectMapper = new ObjectMapper();
-        try { return new ImmutableDoubleArray( objectMapper.readValue( string, double[].class )); }
+        try { this.array = objectMapper.readValue( string, double[].class ); }
         catch ( JsonProcessingException e )
         {
             throw new OmegaCodexException( "Failed to deserialize array: " + string, e );

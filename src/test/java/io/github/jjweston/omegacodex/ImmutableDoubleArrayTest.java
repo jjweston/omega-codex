@@ -28,19 +28,23 @@ public class ImmutableDoubleArrayTest
     @Test
     void constructor_nullArray()
     {
-        @SuppressWarnings( "DataFlowIssue" )
+        double[] nullArray = null;
+
+        @SuppressWarnings( { "ConstantValue", "DataFlowIssue" } )
         IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> new ImmutableDoubleArray( null ));
+                IllegalArgumentException.class, () -> new ImmutableDoubleArray( nullArray ));
 
         assertEquals( "Array must not be null.", exception.getMessage() );
     }
 
     @Test
-    void fromString_nullString()
+    void constructor_nullString()
     {
-        @SuppressWarnings( "DataFlowIssue" )
+        String nullString = null;
+
+        @SuppressWarnings( { "ConstantValue", "DataFlowIssue" } )
         IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> ImmutableDoubleArray.fromString( null ));
+                IllegalArgumentException.class, () -> new ImmutableDoubleArray( nullString ));
 
         assertEquals( "String must not be null.", exception.getMessage() );
     }
