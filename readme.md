@@ -40,11 +40,26 @@ It also uses the OpenAI API and Qdrant.
 
 ### Java
 
-You need a Java JDK and [Maven](https://maven.apache.org/) to build and run Omega Codex.
+You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build and run Omega Codex.
+We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other JDKs may also work.
+
+Omega Codex works with following versions, but other versions may also work:
+
+- Eclipse Temurin:
+  - `21.0.8+9-LTS`
+- Apache Maven:
+  - `3.9.11`
 
 ### Python
 
 You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.org/) to run Omega Codex.
+
+Omega Codex works with following versions, but other versions may also work:
+
+- Python:
+    - `3.13.7`
+- Poetry:
+    - `2.2.0`
 
 Before running Omega Codex you must install Python dependencies.
 In the `python-tools` directory, run: `poetry install`
