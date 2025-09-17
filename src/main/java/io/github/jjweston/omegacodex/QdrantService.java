@@ -68,13 +68,14 @@ class QdrantService implements AutoCloseable
         this.validateVector( embedding.vector() );
 
         String taskName = "Qdrant - Upsert Point";
+        String startMessage = String.format( "Point ID: %,d", embedding.id() );
 
         Points.PointStruct point = Points.PointStruct.newBuilder()
                 .setId( id( embedding.id() ))
                 .setVectors( VectorsFactory.vectors( embedding.vector().toFloatArray() ))
                 .build();
 
-        this.taskRunner.run( taskName, () ->
+        this.taskRunner.run( taskName, startMessage, () ->
                 this.qdrantClient.upsertAsync( this.collectionName, List.of( point )).get() );
     }
 
