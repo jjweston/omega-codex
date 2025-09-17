@@ -97,6 +97,11 @@ class TaskRunner
 
     void run( String taskName, ThrowingRunnable task )
     {
-        this.get( taskName, () -> { task.run(); return null; } );
+        this.run( taskName, null, task );
+    }
+
+    void run( String taskName, String startMessage, ThrowingRunnable task )
+    {
+        this.get( taskName, startMessage, () -> { task.run(); return null; } );
     }
 }

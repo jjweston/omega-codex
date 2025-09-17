@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
@@ -123,7 +124,7 @@ public class QdrantServiceTest
     @Test
     void upsert_success() throws Exception
     {
-        long                 testId        = 42;
+        long                 testId        = 1024;
         ImmutableDoubleArray testVector    = new ImmutableDoubleArray( new double[]{ 0.1f, 0.2f, 0.3f, 0.4f, 0.5f } );
         Embedding            testEmbedding = new Embedding( testId, testVector );
 
@@ -141,6 +142,8 @@ public class QdrantServiceTest
         {
             qdrantService.upsert( testEmbedding );
         }
+
+        verify( this.mockOmegaCodexUtil ).println( "Qdrant - Upsert Point, Starting, Point ID: 1,024" );
     }
 
     @Test
