@@ -67,7 +67,8 @@ public class QdrantServiceIT
                 String resourceName = String.format( "%s-input-%d.json", className, i );
                 long id = i + 1;
                 ImmutableDoubleArray inputVector = this.getVector( resourceName );
-                qdrantService.upsert( id, inputVector );
+                Embedding embedding = new Embedding( id, inputVector );
+                qdrantService.upsert( embedding );
             }
 
             String resourceName = className + "-query.json";

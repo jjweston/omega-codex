@@ -62,15 +62,16 @@ class QdrantService implements AutoCloseable
         this.qdrantClient.close();
     }
 
-    void upsert( long id, ImmutableDoubleArray vector )
+    void upsert( Embedding embedding )
     {
-        this.validateVector( vector );
+        if ( embedding == null ) throw new IllegalArgumentException( "Embedding must not be null." );
+        this.validateVector( embedding.vector() );
 
         String taskName = "Qdrant - Upsert Point";
 
         Points.PointStruct point = Points.PointStruct.newBuilder()
-                .setId( id( id ))
-                .setVectors( VectorsFactory.vectors( vector.toFloatArray() ))
+                .setId( id( embedding.id() ))
+                .setVectors( VectorsFactory.vectors( embedding.vector().toFloatArray() ))
                 .build();
 
         this.taskRunner.run( taskName, () ->

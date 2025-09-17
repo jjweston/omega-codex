@@ -80,22 +80,21 @@ public class QdrantServiceTest
     }
 
     @Test
-    void upsert_nullVector() throws Exception
+    void upsert_nullEmbedding() throws Exception
     {
-        long testId = 42;
-
         this.mockInit( this.testCollectionSize );
 
+        @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () ->
                 {
                     try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
                     {
-                        qdrantService.upsert( testId, null );
+                        qdrantService.upsert( null );
                     }
                 } );
 
-        assertEquals( "Vector must not be null.", exception.getMessage() );
+        assertEquals( "Embedding must not be null.", exception.getMessage() );
     }
 
     @Test
@@ -105,6 +104,7 @@ public class QdrantServiceTest
         int                  actualCollectionSize   = 1_024;
         long                 testId                 = 42;
         ImmutableDoubleArray testVector             = new ImmutableDoubleArray( new double[ actualCollectionSize ] );
+        Embedding            testEmbedding          = new Embedding( testId, testVector );
 
         this.mockInit( expectedCollectionSize );
 
@@ -113,7 +113,7 @@ public class QdrantServiceTest
                 {
                     try ( QdrantService qdrantService = this.createQdrantService( expectedCollectionSize ))
                     {
-                        qdrantService.upsert( testId, testVector );
+                        qdrantService.upsert( testEmbedding );
                     }
                 } );
 
@@ -123,8 +123,9 @@ public class QdrantServiceTest
     @Test
     void upsert_success() throws Exception
     {
-        long testId = 42;
-        ImmutableDoubleArray testVector = new ImmutableDoubleArray( new double[]{ 0.1f, 0.2f, 0.3f, 0.4f, 0.5f } );
+        long                 testId        = 42;
+        ImmutableDoubleArray testVector    = new ImmutableDoubleArray( new double[]{ 0.1f, 0.2f, 0.3f, 0.4f, 0.5f } );
+        Embedding            testEmbedding = new Embedding( testId, testVector );
 
         Points.PointStruct testPoint = Points.PointStruct.newBuilder()
                 .setId( id( testId ))
@@ -138,7 +139,7 @@ public class QdrantServiceTest
 
         try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
         {
-            qdrantService.upsert( testId, testVector );
+            qdrantService.upsert( testEmbedding );
         }
     }
 

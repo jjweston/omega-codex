@@ -18,10 +18,19 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-record Embedding( long id, ImmutableDoubleArray vector )
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+
+public class EmbeddingTest
 {
-    Embedding
+    @Test
+    void constructor_nullVector()
     {
-        if ( vector == null ) throw new IllegalArgumentException( "Vector must not be null." );
+        IllegalArgumentException exception = assertThrowsExactly(
+                IllegalArgumentException.class, () -> new Embedding( 1, null ));
+
+        assertEquals( "Vector must not be null.", exception.getMessage() );
     }
 }
