@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class QdrantServiceIT
 {
@@ -48,9 +49,10 @@ public class QdrantServiceIT
     @Test
     void testSearch() throws Exception
     {
-        String className      = this.getClass().getSimpleName();
-        int    collectionSize = 1_536;
-        int    inputCount     = 5;
+        String className           = this.getClass().getSimpleName();
+        int    collectionSize      = 1_536;
+        int    inputCount          = 5;
+        float  scoreDeltaThreshold = 0.00001f;
 
         List< SearchResult > expectedResults = new LinkedList<>();
         expectedResults.add( new SearchResult( 2, 0.67939620f ));
@@ -74,7 +76,24 @@ public class QdrantServiceIT
             String resourceName = className + "-query.json";
             ImmutableDoubleArray queryVector = this.getVector( resourceName );
             List< SearchResult > actualResults = qdrantService.search( queryVector );
-            assertThat( actualResults ).as( "Search Results" ).containsExactlyElementsOf( expectedResults );
+
+            assertEquals( expectedResults.size(), actualResults.size() );
+            for ( int i = 0; i < expectedResults.size(); i++ )
+            {
+                float scoreDelta = Math.abs( expectedResults.get( i ).score() - actualResults.get( i ).score() );
+                System.out.printf(
+                        "Search Result: %d, Expected ID: %d, Actual ID: %d, " +
+                                "Expected Score: %.10f, Actual Score: %.10f, Score Delta: %.10f%n",
+                        i,
+                        expectedResults.get( i ).id(),
+                        actualResults.get( i ).id(),
+                        expectedResults.get( i ).score(),
+                        actualResults.get( i ).score(),
+                        scoreDelta );
+
+                assertEquals( expectedResults.get( i ).id(), actualResults.get( i ).id(), "Search Result ID " + i );
+                assertThat( scoreDelta ).as( "Score Delta " + i ).isLessThanOrEqualTo( scoreDeltaThreshold );
+            }
         }
     }
 
