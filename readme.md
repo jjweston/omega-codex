@@ -61,8 +61,12 @@ Omega Codex works with following versions, but other versions may also work:
 - Poetry:
     - `2.2.0`
 
-Before running Omega Codex you must install Python dependencies.
-In the `python-tools` directory, run: `poetry install`
+Ensure that your Python dependencies are installed and updated before running Omega Codex.
+Run the following in the `python-tools` directory:
+
+```bash
+poetry sync
+```
 
 ### OpenAI API
 
