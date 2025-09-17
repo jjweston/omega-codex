@@ -49,7 +49,7 @@ public class Qdrant
             for ( String inputString : inputStrings )
             {
                 Embedding inputEmbedding = embeddingService.getEmbedding( inputString );
-                qdrantService.upsert( inputEmbedding.id(), inputEmbedding.vector() );
+                qdrantService.upsert( inputEmbedding );
             }
 
             Embedding queryEmbedding = embeddingService.getEmbedding( queryString );
