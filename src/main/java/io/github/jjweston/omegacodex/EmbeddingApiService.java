@@ -76,8 +76,8 @@ class EmbeddingApiService
 
         if ( input.length() > this.inputLimit )
         {
-            String message =
-                    String.format( "Input exceeds maximum allowed length of %,d characters.", this.inputLimit );
+            String message = String.format(
+                    "Input length must not be greater than %,d. Actual Length: %,d", this.inputLimit, input.length() );
             throw new IllegalArgumentException( message );
         }
 
