@@ -106,6 +106,35 @@ class EmbeddingApiServiceTest
     }
 
     @Test
+    void testGetEmbeddingVector_error() throws Exception
+    {
+        String input = "Test Input";
+        int statusCode = 401;
+        String errorMessage = "Invalid API key provided.";
+
+        String response = String.format( """
+                {
+                    "error":
+                    {
+                        "message": "%s",
+                        "type": "invalid_request_error",
+                        "param": null,
+                        "code": "invalid_api_key"
+                    }
+                }
+                """, errorMessage );
+
+        this.mockApiCall( statusCode, response );
+
+        OmegaCodexException exception = assertThrowsExactly(
+                OmegaCodexException.class, () -> this.embeddingApiService.getEmbeddingVector( input ));
+
+        String expectedMessage =
+                "Embedding API Call, Error Returned, Status Code: " + statusCode + ", Error Message: " + errorMessage;
+        assertEquals( expectedMessage, exception.getMessage() );
+    }
+
+    @Test
     void testGetEmbeddingVector_success() throws Exception
     {
         String input = "This is a test with \"quote\" characters included in it. ".repeat( 20 ).trim();
@@ -146,35 +175,6 @@ class EmbeddingApiServiceTest
 
         verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Starting, Input Length: 1,099" );
         verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Tokens: 1,024" );
-    }
-
-    @Test
-    void testGetEmbeddingVector_error() throws Exception
-    {
-        String input = "Test Input";
-        int statusCode = 401;
-        String errorMessage = "Invalid API key provided.";
-
-        String response = String.format( """
-                {
-                    "error":
-                    {
-                        "message": "%s",
-                        "type": "invalid_request_error",
-                        "param": null,
-                        "code": "invalid_api_key"
-                    }
-                }
-                """, errorMessage );
-
-        this.mockApiCall( statusCode, response );
-
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.embeddingApiService.getEmbeddingVector( input ));
-
-        String expectedMessage =
-                "Embedding API Call, Error Returned, Status Code: " + statusCode + ", Error Message: " + errorMessage;
-        assertEquals( expectedMessage, exception.getMessage() );
     }
 
     private void mockApiCall( int statusCode, String response ) throws Exception
