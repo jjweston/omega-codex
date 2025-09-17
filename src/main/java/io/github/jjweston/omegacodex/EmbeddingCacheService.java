@@ -49,7 +49,7 @@ class EmbeddingCacheService
         try
         {
             PreparedStatement statement = this.connection.prepareStatement(
-                    "SELECT Id, Vector FROM Embeddings WHERE Input = ?" );
+                    "SELECT Id, Vector FROM Embedding WHERE Input = ?" );
             statement.setString( 1, input );
             ResultSet result = statement.executeQuery();
 
@@ -76,7 +76,7 @@ class EmbeddingCacheService
         try
         {
             PreparedStatement statement = this.connection.prepareStatement(
-                    "INSERT OR IGNORE INTO Embeddings ( Input, Vector ) VALUES ( ?, ? )",
+                    "INSERT OR IGNORE INTO Embedding ( Input, Vector ) VALUES ( ?, ? )",
                     Statement.RETURN_GENERATED_KEYS );
             statement.setString( 1, input );
             statement.setString( 2, vector.toString() );
@@ -103,7 +103,7 @@ class EmbeddingCacheService
         try
         {
             PreparedStatement statement = this.connection.prepareStatement(
-                    "SELECT Input FROM Embeddings WHERE Id = ?" );
+                    "SELECT Input FROM Embedding WHERE Id = ?" );
             statement.setLong( 1, id );
             ResultSet result = statement.executeQuery();
 
@@ -119,7 +119,7 @@ class EmbeddingCacheService
         try
         {
             PreparedStatement statement = this.connection.prepareStatement( """
-                    CREATE TABLE IF NOT EXISTS Embeddings
+                    CREATE TABLE IF NOT EXISTS Embedding
                     (
                         Id     INTEGER PRIMARY KEY AUTOINCREMENT,
                         Input  TEXT    UNIQUE NOT NULL,
