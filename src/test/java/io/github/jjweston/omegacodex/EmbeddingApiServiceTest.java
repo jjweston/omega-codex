@@ -125,8 +125,8 @@ class EmbeddingApiServiceTest
                   } ],
                   "model" : "%s",
                   "usage" : {
-                    "prompt_tokens" : 10,
-                    "total_tokens" : 10
+                    "prompt_tokens" : 1024,
+                    "total_tokens" : 1024
                   }
                 }
                 """, expectedVector, this.testModel );
@@ -148,7 +148,7 @@ class EmbeddingApiServiceTest
         assertEquals( expectedVector, actualVector );
 
         verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Starting, Input Length: 1,099" );
-        verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Tokens: 10" );
+        verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Tokens: 1,024" );
     }
 
     @Test
