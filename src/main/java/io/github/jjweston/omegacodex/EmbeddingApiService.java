@@ -129,8 +129,7 @@ class EmbeddingApiService
         this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", taskName, totalTokens ));
 
         JsonNode embeddingNode = responseNode.path( "data" ).get( 0 ).path( "embedding" );
-        double[] vector = new double[ embeddingNode.size() ];
-        for ( int i = 0; i < embeddingNode.size(); i++ ) vector[ i ] = embeddingNode.get( i ).asDouble();
+        double[] vector = embeddingNode.valueStream().mapToDouble( JsonNode::asDouble ).toArray();
         return new ImmutableDoubleArray( vector );
     }
 }
