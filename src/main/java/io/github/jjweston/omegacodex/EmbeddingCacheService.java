@@ -65,7 +65,7 @@ class EmbeddingCacheService
         return null;
     }
 
-    long setEmbedding( String input, ImmutableDoubleArray vector )
+    long cacheEmbedding( String input, ImmutableDoubleArray vector )
     {
         if ( input == null ) throw new IllegalArgumentException( "Input must not be null." );
         if ( input.isEmpty() ) throw new IllegalArgumentException( "Input must not be empty." );
