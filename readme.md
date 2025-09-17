@@ -145,7 +145,9 @@ Replace the values with settings appropriate for your environment.
 
 ## Building and Running
 
-To build Omega Codex: `mvn package`
+To build Omega Codex, and run the unit tests: `mvn package`
+
+To run the integration tests: `mvn verify`
 
 To run the *Embedding* proof of concept: `mvn exec:java -P embed`
 
