@@ -30,6 +30,8 @@ class ThreadedReader implements AutoCloseable
     private Thread thread;
     private Exception exception;
 
+    ThreadedReader() {}
+
     public void close()
     {
         if ( this.thread != null ) this.join();

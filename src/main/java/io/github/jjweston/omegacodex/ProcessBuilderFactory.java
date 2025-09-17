@@ -20,6 +20,8 @@ package io.github.jjweston.omegacodex;
 
 class ProcessBuilderFactory
 {
+    ProcessBuilderFactory() {}
+
     ProcessBuilder create( String... command )
     {
         return new ProcessBuilder( command );
