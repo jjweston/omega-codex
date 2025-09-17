@@ -119,9 +119,9 @@ class EmbeddingApiService
 
         if ( statusCode != 200 )
         {
-            String message = responseNode.path( "error" ).path( "message" ).asText();
-            String exceptionMessage = "Error returned from embedding API. Status Code: " + statusCode;
-            if ( !message.isEmpty() ) exceptionMessage += ", Message: " + message;
+            String errorMessage = responseNode.path( "error" ).path( "message" ).asText();
+            String exceptionMessage = taskName + ", Error Returned, Status Code: " + statusCode;
+            if ( !errorMessage.isEmpty() ) exceptionMessage += ", Error Message: " + errorMessage;
             throw new OmegaCodexException( exceptionMessage );
         }
 
