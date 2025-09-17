@@ -103,14 +103,14 @@ class MarkdownSplitterTest
     void testSplit_stdoutReaderException() throws Exception
     {
         Exception stdoutException = new Exception( "Exception Test: stdout" );
+
         this.mockProcess( 0, stdoutException, null, null, null );
 
         OmegaCodexException exception = assertThrowsExactly(
                 OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         assertEquals( "Exception occurred while reading standard output.", exception.getMessage() );
-        assertEquals( stdoutException.getClass(), exception.getCause().getClass() );
-        assertEquals( stdoutException.getMessage(), exception.getCause().getMessage() );
+        assertEquals( stdoutException, exception.getCause() );
     }
 
     @Test
@@ -124,8 +124,7 @@ class MarkdownSplitterTest
                 OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         assertEquals( "Exception occurred while reading standard error.", exception.getMessage() );
-        assertEquals( stderrException.getClass(), exception.getCause().getClass() );
-        assertEquals( stderrException.getMessage(), exception.getCause().getMessage() );
+        assertEquals( stderrException, exception.getCause() );
     }
 
     @Test
@@ -145,14 +144,12 @@ class MarkdownSplitterTest
         assertEquals( 2, suppressedExceptions.length );
 
         assertEquals( OmegaCodexException.class, suppressedExceptions[ 0 ].getClass() );
-        assertEquals( stdoutException.getClass(), suppressedExceptions[ 0 ].getCause().getClass() );
         assertEquals( "Exception occurred while reading standard output.", suppressedExceptions[ 0 ].getMessage() );
-        assertEquals( stdoutException.getMessage(), suppressedExceptions[ 0 ].getCause().getMessage() );
+        assertEquals( stdoutException, suppressedExceptions[ 0 ].getCause() );
 
         assertEquals( OmegaCodexException.class, suppressedExceptions[ 1 ].getClass() );
-        assertEquals( stderrException.getClass(), suppressedExceptions[ 1 ].getCause().getClass() );
         assertEquals( "Exception occurred while reading standard error.", suppressedExceptions[ 1 ].getMessage() );
-        assertEquals( stderrException.getMessage(), suppressedExceptions[ 1 ].getCause().getMessage() );
+        assertEquals( stderrException, suppressedExceptions[ 1 ].getCause() );
     }
 
     @Test
