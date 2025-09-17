@@ -60,7 +60,7 @@ class EmbeddingServiceTest
         when( this.mockEmbeddingCacheService.getEmbedding( this.testString )).thenReturn( null );
         when( this.mockEmbeddingApiService.getEmbeddingVector( this.testString )).
                 thenReturn( this.testEmbedding.vector() );
-        when( this.mockEmbeddingCacheService.setEmbedding( this.testString, this.testEmbedding.vector() ))
+        when( this.mockEmbeddingCacheService.cacheEmbedding( this.testString, this.testEmbedding.vector() ))
                 .thenReturn( this.testEmbedding.id() );
         Embedding actualEmbedding = this.embeddingService.getEmbedding( this.testString );
         assertEquals( this.testEmbedding, actualEmbedding );

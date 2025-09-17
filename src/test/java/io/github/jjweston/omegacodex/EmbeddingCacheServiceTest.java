@@ -96,56 +96,56 @@ class EmbeddingCacheServiceTest
     }
 
     @Test
-    void testSetEmbedding_nullInput()
+    void testCacheEmbedding_nullInput()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( null, this.testEmbedding.vector() ));
+                () -> this.embeddingCacheService.cacheEmbedding( null, this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be null.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_emptyInput()
+    void testCacheEmbedding_emptyInput()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "", this.testEmbedding.vector() ));
+                () -> this.embeddingCacheService.cacheEmbedding( "", this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be empty.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_nullVector()
+    void testCacheEmbedding_nullVector()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "Test", null ));
+                () -> this.embeddingCacheService.cacheEmbedding( "Test", null ));
 
         assertEquals( "Vector must not be null.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_emptyVector()
+    void testCacheEmbedding_emptyVector()
     {
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "Test", new ImmutableDoubleArray( new double[] {} )));
+                () -> this.embeddingCacheService.cacheEmbedding( "Test", new ImmutableDoubleArray( new double[] {} )));
 
         assertEquals( "Vector must not be empty.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_duplicate() throws Exception
+    void testCacheEmbedding_duplicate() throws Exception
     {
         //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
         when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 0 );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
+                () -> this.embeddingCacheService.cacheEmbedding( "Test", this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be a duplicate.", exception.getMessage() );
     }
 
     @Test
-    void testSetEmbedding_success() throws Exception
+    void testCacheEmbedding_success() throws Exception
     {
         //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
@@ -153,7 +153,7 @@ class EmbeddingCacheServiceTest
         when( this.mockPreparedStatement.getGeneratedKeys() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( true );
         when( this.mockResultSet.getLong( 1 )).thenReturn( 42L );
-        assertEquals( 42, this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
+        assertEquals( 42, this.embeddingCacheService.cacheEmbedding( "Test", this.testEmbedding.vector() ));
     }
 
     @Test

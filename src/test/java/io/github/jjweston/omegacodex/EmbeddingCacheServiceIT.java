@@ -43,14 +43,14 @@ public class EmbeddingCacheServiceIT
         {
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
             Assertions.assertNull( embeddingCacheService.getEmbedding( testInput ));
-            long id = embeddingCacheService.setEmbedding( testInput, testVector );
+            long id = embeddingCacheService.cacheEmbedding( testInput, testVector );
             assertEquals( testInput, embeddingCacheService.getInput( id ));
             Embedding expectedEmbedding = new Embedding( id, testVector );
             Embedding cachedEmbedding = embeddingCacheService.getEmbedding( testInput );
             assertEquals( expectedEmbedding, cachedEmbedding );
 
             IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                    () -> embeddingCacheService.setEmbedding( testInput, testVector ) );
+                    () -> embeddingCacheService.cacheEmbedding( testInput, testVector ) );
 
             assertEquals( "Input must not be a duplicate.", exception.getMessage() );
         }
