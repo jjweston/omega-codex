@@ -47,9 +47,7 @@ class EmbeddingApiServiceTest
 {
     private final String testApiEndpoint   = "https://example.org/v1/embeddings";
     private final String testApiKeyVarName = "OMEGACODEX_TEST_API_KEY";
-
-    private final String testModel       = "test-embedding";
-    private final int    testInputLimit  = 5_000;
+    private final String testModel         = "test-embedding";
 
     @Mock private Environment            mockEnvironment;
     @Mock private HttpClient             mockHttpClient;
@@ -64,10 +62,11 @@ class EmbeddingApiServiceTest
     @BeforeEach
     void setUp()
     {
+        int testInputLimit = 5_000;
         TaskRunner taskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil );
 
         this.embeddingApiService = new EmbeddingApiService(
-                this.testApiEndpoint, this.testApiKeyVarName, this.testModel, this.testInputLimit, this.mockEnvironment,
+                this.testApiEndpoint, this.testApiKeyVarName, this.testModel, testInputLimit, this.mockEnvironment,
                 this.mockHttpRequestBuilder, this.mockHttpClient, this.mockOmegaCodexUtil, taskRunner );
     }
 
@@ -98,14 +97,12 @@ class EmbeddingApiServiceTest
     @Test
     void testGetEmbeddingVector_longInput()
     {
-        String input = "a".repeat( this.testInputLimit + 1 );
+        String input = "a".repeat( 8_192 );
 
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> this.embeddingApiService.getEmbeddingVector( input ));
 
-        String message =
-                String.format( "Input exceeds maximum allowed length of %,d characters.", this.testInputLimit );
-        assertEquals( message, exception.getMessage() );
+        assertEquals( "Input length must not be greater than 5,000. Actual Length: 8,192", exception.getMessage() );
     }
 
     @Test
