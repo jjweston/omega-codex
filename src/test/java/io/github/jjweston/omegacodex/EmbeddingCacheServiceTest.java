@@ -132,19 +132,7 @@ class EmbeddingCacheServiceTest
     }
 
     @Test
-    void testSetEmbedding_newInput() throws Exception
-    {
-        //noinspection MagicConstant
-        when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
-        when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 1 );
-        when( this.mockPreparedStatement.getGeneratedKeys() ).thenReturn( this.mockResultSet );
-        when( this.mockResultSet.next() ).thenReturn( true );
-        when( this.mockResultSet.getLong( 1 )).thenReturn( 42L );
-        assertEquals( 42, this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
-    }
-
-    @Test
-    void testSetEmbedding_duplicateInput() throws Exception
+    void testSetEmbedding_duplicate() throws Exception
     {
         //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
@@ -154,6 +142,18 @@ class EmbeddingCacheServiceTest
                 () -> this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
 
         assertEquals( "Input must not be a duplicate.", exception.getMessage() );
+    }
+
+    @Test
+    void testSetEmbedding_success() throws Exception
+    {
+        //noinspection MagicConstant
+        when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
+        when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 1 );
+        when( this.mockPreparedStatement.getGeneratedKeys() ).thenReturn( this.mockResultSet );
+        when( this.mockResultSet.next() ).thenReturn( true );
+        when( this.mockResultSet.getLong( 1 )).thenReturn( 42L );
+        assertEquals( 42, this.embeddingCacheService.setEmbedding( "Test", this.testEmbedding.vector() ));
     }
 
     @Test
