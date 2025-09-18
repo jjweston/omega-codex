@@ -26,7 +26,7 @@ class Environment
 
     Environment()
     {
-        this.dotenv = Dotenv.load();
+        this( Dotenv.load() );
     }
 
     Environment( Dotenv dotenv )
