@@ -24,7 +24,6 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,15 +34,13 @@ public class MarkdownSplitterIT
     @Test
     void testSplit( @TempDir Path tempDir ) throws Exception
     {
-        List< String > expectedChunks = new LinkedList<>();
-
-        expectedChunks.add( """
+        List< String > expectedChunks = List.of(
+                """
                 # Test Markdown
 
                 This is a test Markdown file.
-                """ );
-
-        expectedChunks.add( """
+                """,
+                """
                 ## License
 
                 ```text

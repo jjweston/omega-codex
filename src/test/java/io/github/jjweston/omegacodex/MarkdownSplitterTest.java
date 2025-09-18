@@ -81,7 +81,8 @@ class MarkdownSplitterTest
     {
         int exitCode = 42;
 
-        String stderr = """
+        String stderr =
+                """
                 This is the first line of an error message.
                 This is the second line of an error message.
                 """;
@@ -92,11 +93,13 @@ class MarkdownSplitterTest
                 OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         String expectedMessage =
-                "Error returned from Python. Exit Code: " + exitCode + "\n" +
-                "Message: This is the first line of an error message.\n" +
-                "Message: This is the second line of an error message.";
+                """
+                Error returned from Python. Exit Code: 42
+                Message: This is the first line of an error message.
+                Message: This is the second line of an error message.
+                """;
 
-        assertEquals( expectedMessage, exception.getMessage() );
+        assertEquals( expectedMessage.trim(), exception.getMessage() );
     }
 
     @Test
@@ -164,7 +167,8 @@ class MarkdownSplitterTest
     @Test
     void testSplit_success() throws Exception
     {
-        String stdout = """
+        String stdout =
+                """
                 [
                     {
                         "content": "# Test Markdown\\n\\nThis is a test Markdown file.\\n\\n",

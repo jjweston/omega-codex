@@ -112,7 +112,8 @@ class EmbeddingApiServiceTest
         int statusCode = 401;
         String errorMessage = "Invalid API key provided.";
 
-        String response = String.format( """
+        String response = String.format(
+                """
                 {
                     "error":
                     {
@@ -141,7 +142,8 @@ class EmbeddingApiServiceTest
         int statusCode = 200;
         ImmutableDoubleArray expectedVector = new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } );
 
-        String response = String.format( """
+        String response = String.format(
+                """
                 {
                   "object" : "list",
                   "data" : [ {
