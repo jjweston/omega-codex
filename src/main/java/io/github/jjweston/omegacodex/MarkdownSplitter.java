@@ -39,9 +39,7 @@ class MarkdownSplitter
 
     MarkdownSplitter()
     {
-        this.processBuilderFactory = new ProcessBuilderFactory();
-        this.stdoutReader = new ThreadedReader();
-        this.stderrReader = new ThreadedReader();
+        this( new ProcessBuilderFactory(), new ThreadedReader(), new ThreadedReader() );
     }
 
     MarkdownSplitter(

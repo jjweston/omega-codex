@@ -31,8 +31,7 @@ class TaskRunner
 
     TaskRunner( long rateLimitDelay )
     {
-        this.rateLimitDelay = rateLimitDelay;
-        this.omegaCodexUtil = new OmegaCodexUtil();
+        this( rateLimitDelay, new OmegaCodexUtil() );
     }
 
     TaskRunner( long rateLimitDelay, OmegaCodexUtil omegaCodexUtil )

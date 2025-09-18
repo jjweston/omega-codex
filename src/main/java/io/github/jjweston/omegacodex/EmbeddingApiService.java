@@ -42,15 +42,15 @@ class EmbeddingApiService
 
     EmbeddingApiService()
     {
-        this.apiEndPoint        = "https://api.openai.com/v1/embeddings";
-        this.apiKeyVarName      = "OMEGACODEX_OPENAI_API_KEY";
-        this.model              = "text-embedding-3-small";
-        this.inputLimit         = 20_000;
-        this.environment        = new Environment();
-        this.httpRequestBuilder = new HttpRequestBuilder();
-        this.httpClient         = HttpClient.newHttpClient();
-        this.omegaCodexUtil     = new OmegaCodexUtil();
-        this.taskRunner         = new TaskRunner( 200 );
+        this( "https://api.openai.com/v1/embeddings",
+              "OMEGACODEX_OPENAI_API_KEY",
+              "text-embedding-3-small",
+              20_000,
+              new Environment(),
+              new HttpRequestBuilder(),
+              HttpClient.newHttpClient(),
+              new OmegaCodexUtil(),
+              new TaskRunner( 200 ));
     }
 
     EmbeddingApiService(
