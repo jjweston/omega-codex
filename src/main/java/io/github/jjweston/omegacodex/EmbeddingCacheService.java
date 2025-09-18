@@ -118,7 +118,8 @@ class EmbeddingCacheService
     {
         try
         {
-            PreparedStatement statement = this.connection.prepareStatement( """
+            PreparedStatement statement = this.connection.prepareStatement(
+                    """
                     CREATE TABLE IF NOT EXISTS Embedding
                     (
                         Id     INTEGER PRIMARY KEY AUTOINCREMENT,
