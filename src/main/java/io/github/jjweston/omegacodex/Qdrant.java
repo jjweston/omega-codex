@@ -25,6 +25,8 @@ import java.util.List;
 
 public class Qdrant
 {
+    private Qdrant() {}
+
     public static void main( String[] args )
     {
         System.out.println( "Qdrant Proof of Concept" );

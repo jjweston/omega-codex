@@ -24,6 +24,8 @@ import java.util.List;
 
 public class Split
 {
+    private Split() {}
+
     public static void main( String[] args )
     {
         Path inputFilePath = Paths.get( "readme.md" );
