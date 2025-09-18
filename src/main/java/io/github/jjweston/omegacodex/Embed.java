@@ -23,6 +23,8 @@ import java.sql.SQLException;
 
 public class Embed
 {
+    private Embed() {}
+
     public static void main( String[] args )
     {
         int vectorStringLimit = 50;
