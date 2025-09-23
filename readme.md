@@ -72,9 +72,9 @@ poetry sync
 
 To use Omega Codex you'll need an [OpenAI API](https://openai.com/api/) key.
 
-If you use an API key with *Restricted* permissions
-you must ensure that your API key has *Request* permission to the *Model capabilities* resource.
-This is required for calling the *embeddings* API endpoint.
+If you use an API key with *Restricted* permissions you must grant *Write* permission to the following resources:
+- Model Capabilities
+- Responses API
 
 ### Qdrant
 
@@ -154,6 +154,8 @@ To run the *Embedding* proof of concept: `mvn exec:java -P embed`
 To run the *Markdown Split* proof of concept: `mvn exec:java -P split`
 
 To run the *Qdrant* proof of concept: `mvn exec:java -P qdrant`
+
+To run the *Command-Line Query Interface* proof of concept: `mvn exec:java -P query`
 
 ## License
 

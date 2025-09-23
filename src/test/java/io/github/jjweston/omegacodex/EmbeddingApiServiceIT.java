@@ -41,7 +41,8 @@ public class EmbeddingApiServiceIT
             expectedVector = new ImmutableDoubleArray( OmegaCodexTestUtil.readInputStream( resourceStream ));
         }
 
-        EmbeddingApiService embeddingApiService = new EmbeddingApiService();
+        OpenAiApiCaller openAiApiCaller = new OpenAiApiCaller();
+        EmbeddingApiService embeddingApiService = new EmbeddingApiService( openAiApiCaller );
         ImmutableDoubleArray actualVector = embeddingApiService.getEmbeddingVector( input );
 
         assertEquals( expectedVector.length(), actualVector.length(), "Vector Length" );

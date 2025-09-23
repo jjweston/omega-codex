@@ -85,7 +85,6 @@ public class QdrantServiceTest
     {
         this.mockInit( this.testCollectionSize );
 
-        @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () ->
                 {
@@ -234,7 +233,9 @@ public class QdrantServiceTest
         when( this.mockQdrantClientFactory.create() ).thenReturn( this.mockQdrantClient );
         when( this.mockQdrantClient.collectionExistsAsync( this.testCollectionName ))
                 .thenReturn( this.mockBooleanListenableFuture );
-        when( this.mockBooleanListenableFuture.get() ).thenReturn( false );
+        when( this.mockBooleanListenableFuture.get() ).thenReturn( true );
+        when( this.mockQdrantClient.deleteCollectionAsync( this.testCollectionName ))
+                .thenReturn( this.mockCollectionResponseListenableFuture );
         when( this.mockQdrantClient.createCollectionAsync( this.testCollectionName, vectorParams ))
                 .thenReturn( this.mockCollectionResponseListenableFuture );
     }

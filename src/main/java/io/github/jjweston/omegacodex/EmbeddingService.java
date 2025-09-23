@@ -23,11 +23,6 @@ class EmbeddingService
     private final EmbeddingCacheService embeddingCacheService;
     private final EmbeddingApiService   embeddingApiService;
 
-    EmbeddingService( EmbeddingCacheService embeddingCacheService )
-    {
-        this( embeddingCacheService, new EmbeddingApiService() );
-    }
-
     EmbeddingService( EmbeddingCacheService embeddingCacheService, EmbeddingApiService embeddingApiService )
     {
         this.embeddingCacheService = embeddingCacheService;

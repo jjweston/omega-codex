@@ -18,10 +18,8 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -29,58 +27,32 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.net.http.HttpClient;
-import java.net.http.HttpResponse;
-import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
 class EmbeddingApiServiceTest
 {
-    private final String testApiEndpoint   = "https://example.org/v1/embeddings";
-    private final String testApiKeyVarName = "OMEGACODEX_TEST_API_KEY";
-    private final String testModel         = "test-embedding";
+    @Mock private OmegaCodexUtil  mockOmegaCodexUtil;
+    @Mock private OpenAiApiCaller mockOpenAiApiCaller;
 
-    @Mock private Environment            mockEnvironment;
-    @Mock private HttpClient             mockHttpClient;
-    @Mock private HttpRequestBuilder     mockHttpRequestBuilder;
-    @Mock private HttpResponse< String > mockHttpResponse;
-    @Mock private OmegaCodexUtil         mockOmegaCodexUtil;
-
-    @Captor private ArgumentCaptor< String > requestBodyCaptor;
-
-    private EmbeddingApiService embeddingApiService;
-
-    @BeforeEach
-    void setUp()
-    {
-        int testInputLimit = 5_000;
-        TaskRunner taskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil );
-
-        this.embeddingApiService = new EmbeddingApiService(
-                this.testApiEndpoint, this.testApiKeyVarName, this.testModel, testInputLimit, this.mockEnvironment,
-                this.mockHttpRequestBuilder, this.mockHttpClient, this.mockOmegaCodexUtil, taskRunner );
-    }
-
-    @AfterEach
-    void tearDown()
-    {
-        verifyNoMoreInteractions( this.mockHttpClient );
-    }
+    @Captor private ArgumentCaptor< String >               startMessageCaptor;
+    @Captor private ArgumentCaptor< Map< String, Object >> requestMapCaptor;
 
     @Test
     void testGetEmbeddingVector_nullInput()
     {
+        EmbeddingApiService embeddingApiService =
+                new EmbeddingApiService( this.mockOmegaCodexUtil, this.mockOpenAiApiCaller );
+
         IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> this.embeddingApiService.getEmbeddingVector( null ));
+                IllegalArgumentException.class, () -> embeddingApiService.getEmbeddingVector( null ));
 
         assertEquals( "Input must not be null.", exception.getMessage() );
     }
@@ -88,8 +60,11 @@ class EmbeddingApiServiceTest
     @Test
     void testGetEmbeddingVector_emptyInput()
     {
+        EmbeddingApiService embeddingApiService =
+                new EmbeddingApiService( this.mockOmegaCodexUtil, this.mockOpenAiApiCaller );
+
         IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> this.embeddingApiService.getEmbeddingVector( "" ));
+                IllegalArgumentException.class, () -> embeddingApiService.getEmbeddingVector( "" ));
 
         assertEquals( "Input must not be empty.", exception.getMessage() );
     }
@@ -97,52 +72,25 @@ class EmbeddingApiServiceTest
     @Test
     void testGetEmbeddingVector_longInput()
     {
-        String input = "a".repeat( 8_192 );
+        EmbeddingApiService embeddingApiService =
+                new EmbeddingApiService( this.mockOmegaCodexUtil, this.mockOpenAiApiCaller );
+
+        String input = "a".repeat( 32_768 );
 
         IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> this.embeddingApiService.getEmbeddingVector( input ));
+                IllegalArgumentException.class, () -> embeddingApiService.getEmbeddingVector( input ));
 
-        assertEquals( "Input length must not be greater than 5,000. Actual Length: 8,192", exception.getMessage() );
+        assertEquals( "Input length must not be greater than 20,000. Actual Length: 32,768", exception.getMessage() );
     }
 
     @Test
-    void testGetEmbeddingVector_error() throws Exception
-    {
-        String input = "Test Input";
-        int statusCode = 401;
-        String errorMessage = "Invalid API key provided.";
-
-        String response = String.format(
-                """
-                {
-                    "error":
-                    {
-                        "message": "%s",
-                        "type": "invalid_request_error",
-                        "param": null,
-                        "code": "invalid_api_key"
-                    }
-                }
-                """, errorMessage );
-
-        this.mockApiCall( statusCode, response );
-
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.embeddingApiService.getEmbeddingVector( input ));
-
-        String expectedMessage =
-                "Embedding API Call, Error Returned, Status Code: " + statusCode + ", Error Message: " + errorMessage;
-        assertEquals( expectedMessage, exception.getMessage() );
-    }
-
-    @Test
+    @SuppressWarnings( "ExtractMethodRecommender" )
     void testGetEmbeddingVector_success() throws Exception
     {
-        String input = "This is a test with \"quote\" characters included in it. ".repeat( 20 ).trim();
-        int statusCode = 200;
+        String expectedInput = "This is a test with \"quote\" characters included in it. ".repeat( 20 ).trim();
         ImmutableDoubleArray expectedVector = new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } );
 
-        String response = String.format(
+        String responseString = String.format(
                 """
                 {
                   "object" : "list",
@@ -151,49 +99,33 @@ class EmbeddingApiServiceTest
                     "index" : 0,
                     "embedding" : %s
                   } ],
-                  "model" : "%s",
                   "usage" : {
-                    "prompt_tokens" : 1024,
                     "total_tokens" : 1024
                   }
                 }
-                """, expectedVector, this.testModel );
+                """, expectedVector );
 
-        this.mockApiCall( statusCode, response );
-
-        ImmutableDoubleArray actualVector = this.embeddingApiService.getEmbeddingVector( input );
-
-        Map< String, String > expectedRequestMap = new HashMap<>();
-        expectedRequestMap.put( "model", this.testModel );
-        expectedRequestMap.put( "input", input );
-
-        String actualRequestString = this.requestBodyCaptor.getValue();
-        TypeReference< HashMap< String, String >> typeRef = new TypeReference<>() {};
         ObjectMapper objectMapper = new ObjectMapper();
-        Map< String, String > actualRequestMap = objectMapper.readValue( actualRequestString, typeRef );
+        JsonNode responseNode = objectMapper.readTree( responseString );
 
-        assertThat( actualRequestMap ).as( "Request Map" ).containsExactlyInAnyOrderEntriesOf( expectedRequestMap );
+        when( this.mockOpenAiApiCaller
+                .getResponse( any(), any(), this.requestMapCaptor.capture(),
+                              this.startMessageCaptor.capture(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        EmbeddingApiService embeddingApiService =
+                new EmbeddingApiService( this.mockOmegaCodexUtil, this.mockOpenAiApiCaller );
+
+        ImmutableDoubleArray actualVector = embeddingApiService.getEmbeddingVector( expectedInput );
+
+        Map< String, Object > requestMap = this.requestMapCaptor.getValue();
+        String actualInput = (String) requestMap.get( "input" );
+        String actualStartMessage = this.startMessageCaptor.getValue();
+
+        assertEquals( expectedInput, actualInput );
         assertEquals( expectedVector, actualVector );
+        assertEquals( "Input Length: 1,099", actualStartMessage );
 
-        verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Starting, Input Length: 1,099" );
         verify( this.mockOmegaCodexUtil ).println( "Embedding API Call, Tokens: 1,024" );
-    }
-
-    private void mockApiCall( int statusCode, String response ) throws Exception
-    {
-        String testApiKey = "Test API Key";
-
-        when( this.mockEnvironment.getString( this.testApiKeyVarName )).thenReturn( testApiKey );
-        when( this.mockHttpRequestBuilder.reset() ).thenReturn( this.mockHttpRequestBuilder );
-        when( this.mockHttpRequestBuilder.uri( this.testApiEndpoint )).thenReturn( this.mockHttpRequestBuilder );
-        when( this.mockHttpRequestBuilder.header( "Content-Type", "application/json" ))
-                .thenReturn( this.mockHttpRequestBuilder );
-        when( this.mockHttpRequestBuilder.header( "Authorization", "Bearer " + testApiKey ))
-                .thenReturn( this.mockHttpRequestBuilder );
-        when( this.mockHttpRequestBuilder.POST( this.requestBodyCaptor.capture() ))
-                .thenReturn( this.mockHttpRequestBuilder );
-        when( this.mockHttpClient.< String >send( any(), any() )).thenReturn( this.mockHttpResponse );
-        when( this.mockHttpResponse.statusCode() ).thenReturn( statusCode );
-        when( this.mockHttpResponse.body() ).thenReturn( response );
     }
 }

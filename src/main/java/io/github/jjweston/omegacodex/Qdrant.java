@@ -45,8 +45,10 @@ public class Qdrant
         try ( Connection connection = sqLiteConnectionFactory.create();
               QdrantService qdrantService = new QdrantService() )
         {
+            OpenAiApiCaller openAiApiCaller = new OpenAiApiCaller();
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
-            EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService );
+            EmbeddingApiService embeddingApiService = new EmbeddingApiService( openAiApiCaller );
+            EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService, embeddingApiService );
 
             for ( String inputString : inputStrings )
             {

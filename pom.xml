@@ -52,6 +52,12 @@ limitations under the License.
                 <exec.mainClass>io.github.jjweston.omegacodex.Qdrant</exec.mainClass>
             </properties>
         </profile>
+        <profile>
+            <id>query</id>
+            <properties>
+                <exec.mainClass>io.github.jjweston.omegacodex.Query</exec.mainClass>
+            </properties>
+        </profile>
     </profiles>
 
     <dependencies>
