@@ -99,7 +99,8 @@ class QdrantService implements AutoCloseable
 
     private void init()
     {
-        if ( !this.collectionExists() ) this.createCollection();
+        if ( this.collectionExists() ) this.deleteCollection();
+        this.createCollection();
     }
 
     private boolean collectionExists()
@@ -110,6 +111,12 @@ class QdrantService implements AutoCloseable
                 this.qdrantClient.collectionExistsAsync( this.collectionName ).get() );
         if ( exists == null ) throw new OmegaCodexException( taskName + ", Null Returned" );
         return exists;
+    }
+
+    private void deleteCollection()
+    {
+        String taskName = "Qdrant - Delete Collection";
+        this.taskRunner.run( taskName, () -> qdrantClient.deleteCollectionAsync( this.collectionName ).get() );
     }
 
     private void createCollection()

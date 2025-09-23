@@ -47,8 +47,10 @@ public class Embed
         SQLiteConnectionFactory sqLiteConnectionFactory = new SQLiteConnectionFactory();
         try ( Connection connection = sqLiteConnectionFactory.create() )
         {
+            OpenAiApiCaller openAiApiCaller = new OpenAiApiCaller();
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
-            EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService );
+            EmbeddingApiService embeddingApiService = new EmbeddingApiService( openAiApiCaller );
+            EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService, embeddingApiService );
             return embeddingService.getEmbedding( input ).vector();
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to close database connection.", e ); }
