@@ -40,6 +40,8 @@ class EmbeddingApiService
 
     EmbeddingApiService( OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
     {
+        if ( openAiApiCaller == null ) throw new IllegalArgumentException( "OpenAI API caller must not be null." );
+
         this.taskName        = "Embedding API Call";
         this.apiEndpoint     = "https://api.openai.com/v1/embeddings";
         this.model           = "text-embedding-3-small";

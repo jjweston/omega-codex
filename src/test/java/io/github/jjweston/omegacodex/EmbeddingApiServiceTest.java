@@ -46,6 +46,16 @@ class EmbeddingApiServiceTest
     @Captor private ArgumentCaptor< Map< String, Object >> requestMapCaptor;
 
     @Test
+    void testConstructor_nullOpenAiApiCaller()
+    {
+        @SuppressWarnings( "DataFlowIssue" )
+        IllegalArgumentException exception = assertThrowsExactly(
+                IllegalArgumentException.class, () -> new EmbeddingApiService( null, this.mockOmegaCodexUtil ));
+
+        assertEquals( "OpenAI API caller must not be null.", exception.getMessage() );
+    }
+
+    @Test
     void testGetEmbeddingVector_nullInput()
     {
         EmbeddingApiService embeddingApiService =

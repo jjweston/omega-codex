@@ -53,6 +53,7 @@ public class ResponseApiService
             throw new IllegalArgumentException( "Embedding cache service must not be null." );
         if ( embeddingService == null ) throw new IllegalArgumentException( "Embedding service must not be null." );
         if ( qdrantService == null ) throw new IllegalArgumentException( "Qdrant service must not be null." );
+        if ( openAiApiCaller == null ) throw new IllegalArgumentException( "OpenAI API caller must not be null." );
 
         this.taskName              = "Response API Call";
         this.apiEndpoint           = "https://api.openai.com/v1/responses";

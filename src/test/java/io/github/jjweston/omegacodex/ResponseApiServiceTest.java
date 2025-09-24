@@ -89,6 +89,18 @@ public class ResponseApiServiceTest
     }
 
     @Test
+    void testConstructor_nullOpenAiCaller()
+    {
+        @SuppressWarnings( "DataFlowIssue" )
+        IllegalArgumentException exception = assertThrowsExactly(
+                IllegalArgumentException.class, () -> new ResponseApiService(
+                        this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                        null, this.mockOmegaCodexUtil ));
+
+        assertEquals( "OpenAI API caller must not be null.", exception.getMessage() );
+    }
+
+    @Test
     void getResponse_nullQuery()
     {
         ResponseApiService responseApiService = this.getResponseApiService();

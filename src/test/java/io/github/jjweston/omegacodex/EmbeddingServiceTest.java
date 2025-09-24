@@ -18,13 +18,13 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
@@ -38,31 +38,49 @@ class EmbeddingServiceTest
     @Mock private EmbeddingCacheService mockEmbeddingCacheService;
     @Mock private EmbeddingApiService   mockEmbeddingApiService;
 
-    private EmbeddingService embeddingService;
-
-    @BeforeEach
-    void setUp()
+    @Test
+    void testConstructor_nullEmbeddingCacheService()
     {
-        this.embeddingService = new EmbeddingService( this.mockEmbeddingCacheService, this.mockEmbeddingApiService );
+        @SuppressWarnings( "DataFlowIssue" )
+        IllegalArgumentException exception = assertThrowsExactly(
+                IllegalArgumentException.class, () -> new EmbeddingService( null, this.mockEmbeddingApiService ));
+
+        assertEquals( "Embedding cache service must not be null.", exception.getMessage() );
+    }
+
+    @Test
+    void testConstructor_nullEmbeddingApiService()
+    {
+        @SuppressWarnings( "DataFlowIssue" )
+        IllegalArgumentException exception = assertThrowsExactly(
+                IllegalArgumentException.class, () -> new EmbeddingService( this.mockEmbeddingCacheService, null ));
+
+        assertEquals( "Embedding API service must not be null.", exception.getMessage() );
     }
 
     @Test
     void testGetEmbedding_cacheHit()
     {
+        EmbeddingService embeddingService =
+                new EmbeddingService( this.mockEmbeddingCacheService, this.mockEmbeddingApiService );
+
         when( this.mockEmbeddingCacheService.getEmbedding( this.testString )).thenReturn( this.testEmbedding );
-        Embedding actualEmbedding = this.embeddingService.getEmbedding( this.testString );
+        Embedding actualEmbedding = embeddingService.getEmbedding( this.testString );
         assertEquals( this.testEmbedding, actualEmbedding );
     }
 
     @Test
     void testGetEmbedding_cacheMiss()
     {
+        EmbeddingService embeddingService =
+                new EmbeddingService( this.mockEmbeddingCacheService, this.mockEmbeddingApiService );
+
         when( this.mockEmbeddingCacheService.getEmbedding( this.testString )).thenReturn( null );
         when( this.mockEmbeddingApiService.getEmbeddingVector( this.testString )).
                 thenReturn( this.testEmbedding.vector() );
         when( this.mockEmbeddingCacheService.cacheEmbedding( this.testString, this.testEmbedding.vector() ))
                 .thenReturn( this.testEmbedding.id() );
-        Embedding actualEmbedding = this.embeddingService.getEmbedding( this.testString );
+        Embedding actualEmbedding = embeddingService.getEmbedding( this.testString );
         assertEquals( this.testEmbedding, actualEmbedding );
     }
 }

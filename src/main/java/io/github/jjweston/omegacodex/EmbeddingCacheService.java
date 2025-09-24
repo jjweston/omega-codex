@@ -36,6 +36,8 @@ class EmbeddingCacheService
 
     EmbeddingCacheService( Connection connection, OmegaCodexUtil omegaCodexUtil )
     {
+        if ( connection == null ) throw new IllegalArgumentException( "Connection must not be null." );
+
         this.connection     = connection;
         this.omegaCodexUtil = omegaCodexUtil;
         this.init();
