@@ -163,11 +163,11 @@ class EmbeddingCacheServiceTest
     }
 
     @Test
+    @SuppressWarnings( "MagicConstant" )
     void testCacheEmbedding_success() throws Exception
     {
         EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
 
-        //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
         when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 1 );
         when( this.mockPreparedStatement.getGeneratedKeys() ).thenReturn( this.mockResultSet );
