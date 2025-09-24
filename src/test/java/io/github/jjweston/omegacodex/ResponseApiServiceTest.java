@@ -58,8 +58,8 @@ public class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.mockOmegaCodexUtil, this.mockOpenAiApiCaller, null,
-                        this.mockEmbeddingService, this.mockQdrantService ));
+                        null, this.mockEmbeddingService, this.mockQdrantService,
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
 
         assertEquals( "Embedding cache service must not be null.", exception.getMessage() );
     }
@@ -70,8 +70,8 @@ public class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.mockOmegaCodexUtil, this.mockOpenAiApiCaller, this.mockEmbeddingCacheService,
-                        null, this.mockQdrantService ));
+                        this.mockEmbeddingCacheService, null, this.mockQdrantService,
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
 
         assertEquals( "Embedding service must not be null.", exception.getMessage() );
     }
@@ -82,8 +82,8 @@ public class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.mockOmegaCodexUtil, this.mockOpenAiApiCaller, this.mockEmbeddingCacheService,
-                        this.mockEmbeddingService, null ));
+                        this.mockEmbeddingCacheService, this.mockEmbeddingService, null,
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
 
         assertEquals( "Qdrant service must not be null.", exception.getMessage() );
     }
@@ -327,7 +327,7 @@ public class ResponseApiServiceTest
     private ResponseApiService getResponseApiService()
     {
         return new ResponseApiService(
-                this.mockOmegaCodexUtil, this.mockOpenAiApiCaller, this.mockEmbeddingCacheService,
-                this.mockEmbeddingService, this.mockQdrantService );
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
     }
 }
