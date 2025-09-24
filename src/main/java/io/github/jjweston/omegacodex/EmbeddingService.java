@@ -25,6 +25,11 @@ class EmbeddingService
 
     EmbeddingService( EmbeddingCacheService embeddingCacheService, EmbeddingApiService embeddingApiService )
     {
+        if ( embeddingCacheService == null )
+            throw new IllegalArgumentException( "Embedding cache service must not be null." );
+        if ( embeddingApiService == null )
+            throw new IllegalArgumentException( "Embedding API service must not be null." );
+
         this.embeddingCacheService = embeddingCacheService;
         this.embeddingApiService   = embeddingApiService;
     }
