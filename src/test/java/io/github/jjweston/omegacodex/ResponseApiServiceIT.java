@@ -77,7 +77,7 @@ public class ResponseApiServiceIT
             EmbeddingApiService embeddingApiService = new EmbeddingApiService( openAiApiCaller );
             EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService, embeddingApiService );
             ResponseApiService responseApiService =
-                    new ResponseApiService( openAiApiCaller, embeddingCacheService, embeddingService, qdrantService );
+                    new ResponseApiService( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller );
 
             String actualResponse = responseApiService.getResponse( query );
 

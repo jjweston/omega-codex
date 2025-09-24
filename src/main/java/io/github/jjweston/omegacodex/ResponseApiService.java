@@ -33,22 +33,21 @@ public class ResponseApiService
     private final String                apiEndpoint;
     private final String                model;
     private final boolean               debug;
-    private final OmegaCodexUtil        omegaCodexUtil;
-    private final OpenAiApiCaller       openAiApiCaller;
     private final EmbeddingCacheService embeddingCacheService;
     private final EmbeddingService      embeddingService;
     private final QdrantService         qdrantService;
+    private final OpenAiApiCaller       openAiApiCaller;
+    private final OmegaCodexUtil        omegaCodexUtil;
     private final List< Message >       messages;
 
-    ResponseApiService( OpenAiApiCaller openAiApiCaller, EmbeddingCacheService embeddingCacheService,
-                        EmbeddingService embeddingService, QdrantService qdrantService )
+    ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
+                        QdrantService qdrantService, OpenAiApiCaller openAiApiCaller )
     {
-        this( new OmegaCodexUtil(), openAiApiCaller, embeddingCacheService, embeddingService, qdrantService );
+        this( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexUtil() );
     }
 
-    ResponseApiService( OmegaCodexUtil omegaCodexUtil, OpenAiApiCaller openAiApiCaller,
-                        EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
-                        QdrantService qdrantService )
+    ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
+                        QdrantService qdrantService, OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
     {
         if ( embeddingCacheService == null )
             throw new IllegalArgumentException( "Embedding cache service must not be null." );
@@ -59,10 +58,10 @@ public class ResponseApiService
         this.apiEndpoint           = "https://api.openai.com/v1/responses";
         this.model                 = "gpt-5";
         this.debug                 = false;
-        this.openAiApiCaller       = openAiApiCaller;
         this.embeddingCacheService = embeddingCacheService;
         this.embeddingService      = embeddingService;
         this.qdrantService         = qdrantService;
+        this.openAiApiCaller       = openAiApiCaller;
         this.omegaCodexUtil        = omegaCodexUtil;
 
         String developerMessage =

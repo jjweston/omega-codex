@@ -42,8 +42,8 @@ public class Query
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );
             EmbeddingApiService embeddingApiService = new EmbeddingApiService( openAiApiCaller );
             EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService, embeddingApiService );
-            ResponseApiService responseApiService = new ResponseApiService(
-                    openAiApiCaller, embeddingCacheService, embeddingService, qdrantService );
+            ResponseApiService responseApiService =
+                    new ResponseApiService( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller );
 
             Query.processReadme( embeddingService, qdrantService );
             Query.queryLoop( responseApiService );
