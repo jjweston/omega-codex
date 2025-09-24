@@ -30,23 +30,23 @@ class EmbeddingApiService
     private final String          model;
     private final int             inputLimit;
     private final boolean         debug;
-    private final OmegaCodexUtil  omegaCodexUtil;
     private final OpenAiApiCaller openAiApiCaller;
+    private final OmegaCodexUtil  omegaCodexUtil;
 
     EmbeddingApiService( OpenAiApiCaller openAiApiCaller )
     {
-        this( new OmegaCodexUtil(), openAiApiCaller );
+        this( openAiApiCaller, new OmegaCodexUtil() );
     }
 
-    EmbeddingApiService( OmegaCodexUtil omegaCodexUtil, OpenAiApiCaller openAiApiCaller )
+    EmbeddingApiService( OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
     {
         this.taskName        = "Embedding API Call";
         this.apiEndpoint     = "https://api.openai.com/v1/embeddings";
         this.model           = "text-embedding-3-small";
         this.inputLimit      = 20_000;
         this.debug           = false;
-        this.omegaCodexUtil  = omegaCodexUtil;
         this.openAiApiCaller = openAiApiCaller;
+        this.omegaCodexUtil  = omegaCodexUtil;
     }
 
     ImmutableDoubleArray getEmbeddingVector( String input )
