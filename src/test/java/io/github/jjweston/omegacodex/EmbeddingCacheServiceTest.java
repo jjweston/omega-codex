@@ -132,9 +132,9 @@ class EmbeddingCacheServiceTest
     }
 
     @Test
+    @SuppressWarnings( "MagicConstant" )
     void testCacheEmbedding_duplicate() throws Exception
     {
-        //noinspection MagicConstant
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
         when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 0 );
 
