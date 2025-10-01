@@ -221,6 +221,9 @@ limitations under the License.
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -229,6 +232,7 @@ limitations under the License.
                 <configuration>
                     <executable>java</executable>
                     <arguments>
+                        <argument>--enable-native-access=ALL-UNNAMED</argument>
                         <argument>-classpath</argument>
                         <classpath/>
                         <argument>${exec.mainClass}</argument>
