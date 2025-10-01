@@ -202,10 +202,6 @@ limitations under the License.
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
                 <configuration>
-                    <!-- IntelliJ cannot resolve the org.mockito:mockito-core:jar property. -->
-                    <!-- It is set dynamically by maven-dependency-plugin. -->
-                    <!-- https://youtrack.jetbrains.com/issue/IDEA-129269/ -->
-                    <!--suppress UnresolvedMavenProperty -->
                     <argLine>-javaagent:${org.mockito:mockito-core:jar} -Xshare:off</argLine>
                 </configuration>
             </plugin>
