@@ -30,6 +30,7 @@ limitations under the License.
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <exec.mainClass>io.github.jjweston.omegacodex.Query</exec.mainClass>
     </properties>
 
     <profiles>
@@ -49,12 +50,6 @@ limitations under the License.
             <id>qdrant</id>
             <properties>
                 <exec.mainClass>io.github.jjweston.omegacodex.Qdrant</exec.mainClass>
-            </properties>
-        </profile>
-        <profile>
-            <id>query</id>
-            <properties>
-                <exec.mainClass>io.github.jjweston.omegacodex.Query</exec.mainClass>
             </properties>
         </profile>
     </profiles>
@@ -226,6 +221,19 @@ limitations under the License.
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-classpath</argument>
+                        <classpath/>
+                        <argument>${exec.mainClass}</argument>
+                    </arguments>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -149,13 +149,13 @@ To build Omega Codex, and run the unit tests: `mvn package`
 
 To run the integration tests: `mvn verify`
 
-To run the *Embedding* proof of concept: `mvn exec:java -P embed`
+To run the *Command-Line Query Interface*: `mvn exec:exec`
 
-To run the *Markdown Split* proof of concept: `mvn exec:java -P split`
+To run the *Embedding* proof of concept: `mvn exec:exec -P embed`
 
-To run the *Qdrant* proof of concept: `mvn exec:java -P qdrant`
+To run the *Markdown Split* proof of concept: `mvn exec:exec -P split`
 
-To run the *Command-Line Query Interface* proof of concept: `mvn exec:java -P query`
+To run the *Qdrant* proof of concept: `mvn exec:exec -P qdrant`
 
 ## License
 
