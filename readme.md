@@ -59,7 +59,7 @@ Omega Codex works with following versions, but other versions may also work:
 - Python:
     - `3.13.7`
 - Poetry:
-    - `2.2.0`
+    - `2.2.1`
 
 Ensure that your Python dependencies are installed and updated before running Omega Codex.
 Run the following in the `python-tools` directory:
