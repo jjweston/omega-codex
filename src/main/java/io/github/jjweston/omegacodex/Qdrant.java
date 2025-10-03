@@ -23,11 +23,11 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Qdrant
+class Qdrant
 {
     private Qdrant() {}
 
-    public static void main( String[] args )
+    static void main()
     {
         System.out.println( "Qdrant Proof of Concept" );
 
