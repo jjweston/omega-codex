@@ -21,11 +21,11 @@ package io.github.jjweston.omegacodex;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class Embed
+class Embed
 {
     private Embed() {}
 
-    public static void main( String[] args )
+    static void main()
     {
         int vectorStringLimit = 50;
         String input = "Omega Codex is an AI assistant for developers.";
