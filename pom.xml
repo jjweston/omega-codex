@@ -227,6 +227,7 @@ limitations under the License.
                 <version>3.6.0</version>
                 <configuration>
                     <executable>java</executable>
+                    <inheritIo>true</inheritIo>
                     <arguments>
                         <argument>--enable-native-access=ALL-UNNAMED</argument>
                         <argument>-classpath</argument>
