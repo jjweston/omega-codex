@@ -26,3 +26,5 @@ updates:
     schedule:
       interval: "weekly"
     versioning-strategy: increase
+    allow:
+      - dependency-type: "all"
