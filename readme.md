@@ -149,6 +149,8 @@ To build Omega Codex, and run the unit tests: `mvn package`
 
 To run the integration tests: `mvn verify`
 
+To run the *Graphical Query Interface*: `mvn javafx:run`
+
 To run the *Command-Line Query Interface*: `mvn exec:exec`
 
 To run the *Embedding* proof of concept: `mvn exec:exec -P embed`
