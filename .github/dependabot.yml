@@ -20,6 +20,10 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      io-grpc:
+        patterns:
+          - "io.grpc.*"
 
   - package-ecosystem: "pip"
     directory: "/python-tools"
