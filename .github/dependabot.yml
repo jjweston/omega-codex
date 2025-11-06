@@ -29,6 +29,7 @@ updates:
     directory: "/python-tools"
     schedule:
       interval: "weekly"
+    versioning-strategy: increase-if-necessary
     allow:
       - dependency-type: "all"
     open-pull-requests-limit: 10
