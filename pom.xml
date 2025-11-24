@@ -122,7 +122,7 @@ limitations under the License.
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
-            <version>1.76.0</version>
+            <version>1.77.0</version>
         </dependency>
 
         <!-- workaround for vulnerable transitive dependency of io.qdrant:client -->
