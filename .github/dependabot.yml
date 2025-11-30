@@ -23,7 +23,7 @@ updates:
     groups:
       io-grpc:
         patterns:
-          - "io.grpc.*"
+          - "io.grpc:*"
 
   - package-ecosystem: "pip"
     directory: "/python-tools"
