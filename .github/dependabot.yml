@@ -24,6 +24,9 @@ updates:
       io-grpc:
         patterns:
           - "io.grpc:*"
+      org-mockito:
+        patterns:
+          - "org.mockito:*"
 
   - package-ecosystem: "pip"
     directory: "/python-tools"
