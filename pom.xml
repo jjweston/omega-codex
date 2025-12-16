@@ -66,7 +66,7 @@ limitations under the License.
         <dependency>
             <groupId>io.qdrant</groupId>
             <artifactId>client</artifactId>
-            <version>1.15.0</version>
+            <version>1.16.1</version>
         </dependency>
 
         <!-- relational database -->
@@ -102,12 +102,10 @@ limitations under the License.
             <version>2.0.17</version>
         </dependency>
 
-        <!-- needed for io.qdrant:client -->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.5.0-jre</version>
-        </dependency>
+        <!-- workaround for vulnerable transitive dependency of io.qdrant:client -->
+        <!-- https://www.mend.io/vulnerability-database/CVE-2025-55163 -->
+        <!-- https://github.com/grpc/grpc-java/issues/12416 -->
+        <!-- https://github.com/qdrant/java-client/issues/99 -->
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
@@ -123,16 +121,6 @@ limitations under the License.
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>1.77.0</version>
-        </dependency>
-
-        <!-- workaround for vulnerable transitive dependency of io.qdrant:client -->
-        <!-- https://www.mend.io/vulnerability-database/CVE-2024-7254 -->
-        <!-- https://github.com/grpc/grpc-java/issues/11542 -->
-        <!-- https://github.com/qdrant/java-client/issues/83 -->
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>4.33.2</version>
         </dependency>
 
         <!-- testing -->

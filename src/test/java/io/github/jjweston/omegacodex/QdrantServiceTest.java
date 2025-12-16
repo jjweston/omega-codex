@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.VectorsFactory;
 import io.qdrant.client.grpc.Collections;
+import io.qdrant.client.grpc.Common;
 import io.qdrant.client.grpc.Points;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -249,7 +250,7 @@ public class QdrantServiceTest
     private Points.ScoredPoint mockScoredPoint( long id, float score )
     {
         Points.ScoredPoint scoredPoint = Mockito.mock( Points.ScoredPoint.class );
-        Points.PointId pointId = Mockito.mock( Points.PointId.class );
+        Common.PointId pointId = Mockito.mock( Common.PointId.class );
         when( scoredPoint.getId() ).thenReturn( pointId );
         when( pointId.getNum() ).thenReturn( id );
         when ( scoredPoint.getScore() ).thenReturn( score );
