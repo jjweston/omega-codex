@@ -21,9 +21,6 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 10
     groups:
-      io-grpc:
-        patterns:
-          - "io.grpc:*"
       org-mockito:
         patterns:
           - "org.mockito:*"
