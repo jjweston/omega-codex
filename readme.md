@@ -48,7 +48,7 @@ Omega Codex works with following versions, but other versions may also work:
 - Eclipse Temurin:
   - `25.0.1+8-LTS`
 - Apache Maven:
-  - `3.9.11`
+  - `3.9.12`
 
 ### Python
 
