@@ -46,7 +46,7 @@ We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other 
 Omega Codex works with following versions, but other versions may also work:
 
 - Eclipse Temurin:
-  - `25+36-LTS`
+  - `25.0.1+8-LTS`
 - Apache Maven:
   - `3.9.11`
 
