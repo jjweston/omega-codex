@@ -57,7 +57,7 @@ You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.or
 Omega Codex works with following versions, but other versions may also work:
 
 - Python:
-    - `3.13.7`
+    - `3.14.2`
 - Poetry:
     - `2.2.1`
 
