@@ -59,7 +59,7 @@ limitations under the License.
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>25</version>
+            <version>25.0.1</version>
         </dependency>
 
         <!-- vector database -->
