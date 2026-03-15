@@ -24,6 +24,10 @@ updates:
       org-mockito:
         patterns:
           - "org.mockito:*"
+      testing-plugins:
+        patterns:
+          - "org.apache.maven.plugins:maven-failsafe-plugin"
+          - "org.apache.maven.plugins:maven-surefire-plugin"
 
   - package-ecosystem: "pip"
     directory: "/python-tools"
