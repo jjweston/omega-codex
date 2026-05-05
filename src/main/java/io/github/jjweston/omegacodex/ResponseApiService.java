@@ -31,7 +31,10 @@ public class ResponseApiService
     private final String                taskName;
     private final String                apiEndpoint;
     private final String                model;
-    private final boolean               debug;
+    private final int                   iterationLimit;
+    private final boolean               logApiSummary;
+    private final boolean               logApiDetails;
+    private final boolean               logFunctionCalls;
     private final ObjectMapper          objectMapper;
     private final EmbeddingCacheService embeddingCacheService;
     private final EmbeddingService      embeddingService;
@@ -40,17 +43,22 @@ public class ResponseApiService
     private final OmegaCodexUtil        omegaCodexUtil;
     private final ArrayNode             tools;
     private final ArrayNode             messages;
-    private final int                   iterationLimit;
 
     ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
                         QdrantService qdrantService, OpenAiApiCaller openAiApiCaller )
     {
-        this( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexUtil(), 5 );
+        int     iterationLimit   = 5;
+        boolean logApiSummary    = true;
+        boolean logApiDetails    = false;
+        boolean logFunctionCalls = true;
+
+        this( iterationLimit, logApiSummary, logApiDetails, logFunctionCalls,
+              embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexUtil() );
     }
 
-    ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
-                        QdrantService qdrantService, OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil,
-                        int iterationLimit )
+    ResponseApiService( int iterationLimit, boolean logApiSummary, boolean logApiDetails, boolean logFunctionCalls,
+                        EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
+                        QdrantService qdrantService, OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
     {
         if ( embeddingCacheService == null )
             throw new IllegalArgumentException( "Embedding cache service must not be null." );
@@ -61,14 +69,16 @@ public class ResponseApiService
         this.taskName              = "Response API Call";
         this.apiEndpoint           = "https://api.openai.com/v1/responses";
         this.model                 = "gpt-5.4";
-        this.debug                 = false;
+        this.iterationLimit        = iterationLimit;
+        this.logApiSummary         = logApiSummary;
+        this.logApiDetails         = logApiDetails;
+        this.logFunctionCalls      = logFunctionCalls;
         this.objectMapper          = new ObjectMapper();
         this.embeddingCacheService = embeddingCacheService;
         this.embeddingService      = embeddingService;
         this.qdrantService         = qdrantService;
         this.openAiApiCaller       = openAiApiCaller;
         this.omegaCodexUtil        = omegaCodexUtil;
-        this.iterationLimit        = iterationLimit;
 
         this.tools = this.objectMapper.createArrayNode()
                 .add( this.objectMapper.createObjectNode()
@@ -149,16 +159,19 @@ public class ResponseApiService
                     .set( "reasoning", reasoningNode )
                     .set( "include", includeNode );
 
-            JsonNode responseNode =
-                    this.openAiApiCaller.getResponse( this.taskName, this.apiEndpoint, requestNode, null, this.debug );
+            JsonNode responseNode = this.openAiApiCaller.getResponse(
+                    this.taskName, this.apiEndpoint, requestNode, null, this.logApiDetails );
 
-            JsonNode usageNode = responseNode.path( "usage" );
-            int inputTokens  = usageNode.path( "input_tokens"  ).intValue();
-            int outputTokens = usageNode.path( "output_tokens" ).intValue();
-            int totalTokens  = usageNode.path( "total_tokens"  ).intValue();
-            this.omegaCodexUtil.println( String.format(
-                    "%s, Iteration: %,d, Input Tokens: %,d, Output Tokens: %,d, Total Tokens: %,d",
-                    this.taskName, iterationCount, inputTokens, outputTokens, totalTokens ));
+            if ( this.logApiSummary )
+            {
+                JsonNode usageNode = responseNode.path( "usage" );
+                int inputTokens  = usageNode.path( "input_tokens"  ).intValue();
+                int outputTokens = usageNode.path( "output_tokens" ).intValue();
+                int totalTokens  = usageNode.path( "total_tokens"  ).intValue();
+                this.omegaCodexUtil.println( String.format(
+                        "%s, Iteration: %,d, Input Tokens: %,d, Output Tokens: %,d, Total Tokens: %,d",
+                        this.taskName, iterationCount, inputTokens, outputTokens, totalTokens ));
+            }
 
             JsonNode outputNode = responseNode.path( "output" );
             for ( JsonNode messageNode : outputNode ) this.messages.add( messageNode );
@@ -261,14 +274,29 @@ public class ResponseApiService
         String query = argumentsNode.path( "query" ).asString();
         if ( query.isEmpty() ) throw new IllegalArgumentException( "Query must not be empty." );
 
+        if ( this.logFunctionCalls )
+        {
+            this.omegaCodexUtil.println( String.format( "%s, Search Readme: %s", this.taskName, query ));
+        }
+
         Embedding queryEmbedding = this.embeddingService.getEmbedding( query );
         List< SearchResult > searchResults = this.qdrantService.search( queryEmbedding.vector() );
-        ArrayNode resultList = objectMapper.createArrayNode();
 
+        int maxIdLength = !this.logFunctionCalls ? 1 : searchResults.stream()
+                .mapToInt( searchResult -> String.format( "%,d", searchResult.id() ).length() )
+                .max().orElse( 1 );
+
+        ArrayNode resultList = objectMapper.createArrayNode();
         for ( SearchResult searchResult : searchResults )
         {
-            long   id   = searchResult.id();
-            String text = this.embeddingCacheService.getInput( id );
+            long   id    = searchResult.id();
+            float  score = searchResult.score();
+            String text  = this.embeddingCacheService.getInput( id );
+
+            if ( this.logFunctionCalls )
+            {
+                this.omegaCodexUtil.println( String.format( "Chunk: %," + maxIdLength + "d, Score: %.10f", id, score ));
+            }
 
             resultList.add( this.objectMapper.createObjectNode()
                     .put( "id", id )
