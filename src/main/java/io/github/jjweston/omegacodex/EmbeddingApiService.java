@@ -19,9 +19,8 @@ limitations under the License.
 package io.github.jjweston.omegacodex;
 
 import tools.jackson.databind.JsonNode;
-
-import java.util.HashMap;
-import java.util.Map;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 class EmbeddingApiService
 {
@@ -65,12 +64,13 @@ class EmbeddingApiService
 
         String startMessage = String.format( "Input Length: %,d", input.length() );
 
-        Map< String, String > requestMap = new HashMap<>();
-        requestMap.put( "model", this.model );
-        requestMap.put( "input", input );
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode requestNode = objectMapper.createObjectNode();
+        requestNode.put( "model", this.model );
+        requestNode.put( "input", input );
 
         JsonNode responseNode = this.openAiApiCaller.getResponse(
-                this.taskName, this.apiEndpoint, requestMap, startMessage, this.debug );
+                this.taskName, this.apiEndpoint, requestNode, startMessage, this.debug );
 
         int totalTokens = responseNode.path( "usage" ).path( "total_tokens" ).intValue();
         this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", this.taskName, totalTokens ));

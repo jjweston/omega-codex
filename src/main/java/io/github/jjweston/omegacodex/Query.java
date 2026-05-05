@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,11 +21,9 @@ package io.github.jjweston.omegacodex;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
 class Query
 {
@@ -45,18 +43,12 @@ class Query
             ResponseApiService responseApiService =
                     new ResponseApiService( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller );
 
-            Query.processReadme( embeddingService, qdrantService );
+            MarkdownLoader markdownLoader = new MarkdownLoader( embeddingService, qdrantService );
+            markdownLoader.load( Paths.get( "readme.md" ));
+
             Query.queryLoop( responseApiService );
         }
         catch ( SQLException e ) { throw new OmegaCodexException( "Failed to close database connection.", e ); }
-    }
-
-    private static void processReadme( EmbeddingService embeddingService, QdrantService qdrantService )
-    {
-        Path inputFilePath = Paths.get( "readme.md" );
-        MarkdownSplitter markdownSplitter = new MarkdownSplitter();
-        List< String > chunks = markdownSplitter.split( inputFilePath );
-        for ( String chunk : chunks ) qdrantService.upsert( embeddingService.getEmbedding( chunk ));
     }
 
     private static void queryLoop( ResponseApiService responseApiService )

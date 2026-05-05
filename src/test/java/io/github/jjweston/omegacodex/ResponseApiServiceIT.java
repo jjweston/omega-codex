@@ -21,8 +21,10 @@ package io.github.jjweston.omegacodex;
 import io.qdrant.client.QdrantClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.sqlite.SQLiteDataSource;
 
+import java.nio.file.Path;
 import java.sql.Connection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,8 +47,7 @@ public class ResponseApiServiceIT
     }
 
     @Test
-    @SuppressWarnings( "ExtractMethodRecommender" )
-    void testGetResponse() throws Exception
+    void testGetResponse( @TempDir Path tempDir ) throws Exception
     {
         int collectionSize = 1_536;
 
@@ -61,7 +62,7 @@ public class ResponseApiServiceIT
                 Replace `[answer]` with your answer. \
                 Do not add anything else to your response otherwise the test will fail.
 
-                What is your name?\
+                What is the name of this software project?\
                 """;
 
         String query2 =
@@ -76,6 +77,9 @@ public class ResponseApiServiceIT
 
                 What question did I ask in my previous message?\
                 """;
+
+        String response1 = "Answer: Magic Carpet";
+        String response2 = "Answer: What is the name of this software project?";
 
         String databaseUrl = "jdbc:sqlite::memory:";
         SQLiteDataSource dataSource = new SQLiteDataSource();
@@ -92,8 +96,11 @@ public class ResponseApiServiceIT
             ResponseApiService responseApiService =
                     new ResponseApiService( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller );
 
-            assertEquals( "Answer: Omega Codex", responseApiService.getResponse( query1 ));
-            assertEquals( "Answer: What is your name?", responseApiService.getResponse( query2 ));
+            MarkdownLoader markdownLoader = new MarkdownLoader( embeddingService, qdrantService );
+            markdownLoader.load( TestUtil.copyResource( this.getClass().getSimpleName() + ".md", tempDir ));
+
+            assertEquals( response1, responseApiService.getResponse( query1 ));
+            assertEquals( response2, responseApiService.getResponse( query2 ));
         }
     }
 }
