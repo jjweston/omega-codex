@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,13 +21,10 @@ package io.github.jjweston.omegacodex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class MarkdownSplitterIT
 {
@@ -60,17 +57,9 @@ public class MarkdownSplitterIT
                 ```
                 """ );
 
-        String resourceFileName = this.getClass().getSimpleName() + ".md";
-        Path resourcePath = tempDir.resolve( resourceFileName );
-
-        try ( InputStream resourceStream = this.getClass().getResourceAsStream( resourceFileName ))
-        {
-            assertNotNull( resourceStream, "Missing Resource: " + resourceFileName );
-            Files.copy( resourceStream, resourcePath );
-        }
-
         MarkdownSplitter markdownSplitter = new MarkdownSplitter();
-        List< String > actualChunks = markdownSplitter.split( resourcePath );
+        List< String > actualChunks =
+                markdownSplitter.split( TestUtil.copyResource( this.getClass().getSimpleName() + ".md", tempDir ));
         assertThat( actualChunks ).as( "Chunks" ).isEqualTo( expectedChunks );
     }
 }

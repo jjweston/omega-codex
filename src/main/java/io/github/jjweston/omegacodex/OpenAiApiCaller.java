@@ -21,11 +21,11 @@ package io.github.jjweston.omegacodex;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Map;
 
 public class OpenAiApiCaller
 {
@@ -58,19 +58,19 @@ public class OpenAiApiCaller
     }
 
     JsonNode getResponse(
-            String taskName, String apiEndpoint, Map< String, ? > requestMap, String startMessage, boolean debug )
+            String taskName, String apiEndpoint, ObjectNode requestNode, String startMessage, boolean debug )
     {
         if ( taskName == null ) throw new IllegalArgumentException( "Task name must not be null." );
         if ( apiEndpoint == null ) throw new IllegalArgumentException( "API endpoint must not be null." );
-        if ( requestMap == null ) throw new IllegalArgumentException( "Request map must not be null." );
+        if ( requestNode == null ) throw new IllegalArgumentException( "Request node must not be null." );
 
         ObjectMapper objectMapper = new ObjectMapper();
 
-        String requestString = objectMapper.writeValueAsString( requestMap );
+        String requestString = objectMapper.writeValueAsString( requestNode );
 
         if ( debug )
         {
-            String debugRequestString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString( requestMap );
+            String debugRequestString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString( requestNode );
 
             omegaCodexUtil.println( "----------------------------------------------------------------------" );
             omegaCodexUtil.println( "Request:" );

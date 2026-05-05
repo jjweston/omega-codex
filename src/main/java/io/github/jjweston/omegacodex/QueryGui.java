@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.LinkedList;
@@ -60,9 +59,11 @@ public class QueryGui extends Application
         EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( this.connection );
         EmbeddingApiService embeddingApiService = new EmbeddingApiService( openAiApiCaller );
         EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService, embeddingApiService );
-        this.responseApiService =
-                new ResponseApiService( embeddingCacheService, embeddingService, this.qdrantService, openAiApiCaller );
-        this.processReadme( embeddingService, this.qdrantService );
+        this.responseApiService = new ResponseApiService(
+                embeddingCacheService, embeddingService, this.qdrantService, openAiApiCaller );
+
+        MarkdownLoader markdownLoader = new MarkdownLoader( embeddingService, qdrantService );
+        markdownLoader.load( Paths.get( "readme.md" ));
     }
 
     public void stop()
@@ -159,13 +160,5 @@ public class QueryGui extends Application
         this.sendButton.setDisable( false );
         this.addApiMessage( response );
         this.inputArea.requestFocus();
-    }
-
-    private void processReadme( EmbeddingService embeddingService, QdrantService qdrantService )
-    {
-        Path inputFilePath = Paths.get( "readme.md" );
-        MarkdownSplitter markdownSplitter = new MarkdownSplitter();
-        List< String > chunks = markdownSplitter.split( inputFilePath );
-        for ( String chunk : chunks ) qdrantService.upsert( embeddingService.getEmbedding( chunk ));
     }
 }

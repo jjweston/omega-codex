@@ -30,13 +30,10 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
@@ -45,13 +42,15 @@ import static org.mockito.Mockito.when;
 @ExtendWith( MockitoExtension.class )
 public class ResponseApiServiceTest
 {
+    private final int testIterationLimit = 5;
+
     @Mock private OpenAiApiCaller       mockOpenAiApiCaller;
     @Mock private EmbeddingCacheService mockEmbeddingCacheService;
     @Mock private EmbeddingService      mockEmbeddingService;
     @Mock private QdrantService         mockQdrantService;
     @Mock private OmegaCodexUtil        mockOmegaCodexUtil;
 
-    @Captor private ArgumentCaptor< Map< String, Object >> requestMapCaptor;
+    @Captor private ArgumentCaptor< ObjectNode > requestNodeCaptor;
 
     @Test
     void testConstructor_nullEmbeddingCacheService()
@@ -60,7 +59,7 @@ public class ResponseApiServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         null, this.mockEmbeddingService, this.mockQdrantService,
-                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit ));
 
         assertEquals( "Embedding cache service must not be null.", exception.getMessage() );
     }
@@ -72,7 +71,7 @@ public class ResponseApiServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.mockEmbeddingCacheService, null, this.mockQdrantService,
-                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit ));
 
         assertEquals( "Embedding service must not be null.", exception.getMessage() );
     }
@@ -84,7 +83,7 @@ public class ResponseApiServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.mockEmbeddingCacheService, this.mockEmbeddingService, null,
-                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit ));
 
         assertEquals( "Qdrant service must not be null.", exception.getMessage() );
     }
@@ -96,7 +95,7 @@ public class ResponseApiServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                        null, this.mockOmegaCodexUtil ));
+                        null, this.mockOmegaCodexUtil, this.testIterationLimit ));
 
         assertEquals( "OpenAI API caller must not be null.", exception.getMessage() );
     }
@@ -104,7 +103,9 @@ public class ResponseApiServiceTest
     @Test
     void getResponse_nullQuery()
     {
-        ResponseApiService responseApiService = this.getResponseApiService();
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> responseApiService.getResponse( null ));
@@ -114,19 +115,108 @@ public class ResponseApiServiceTest
 
     @Test
     @SuppressWarnings( "ExtractMethodRecommender" )
-    void getResponse_success()
+    void getResponse_iterationLimit()
     {
-        ResponseApiService responseApiService = this.getResponseApiService();
+        int iterationLimit = 1024;
 
-        String queryString = "What is your quest?";
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, iterationLimit );
+
+        String userQuery = "What is a problem with an infinite solution?";
+        String functionQuery = "What is infinity plus one?";
         ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
         Embedding queryEmbedding = new Embedding( 42, queryVector );
         SearchResult searchResult = new SearchResult( 7, 0.5f );
         List< SearchResult > searchResults = List.of( searchResult );
-        String searchResultInput = "Quest Objective: Holy Grail";
-        String expectedResponse = "To seek the Holy Grail!";
+        String testSearchResult = "Infinity";
 
         String responseString = String.format(
+                """
+                {
+                  "output":
+                  [
+                    {
+                      "type" : "function_call",
+                      "arguments" : "{\\"query\\":\\"%s\\"}",
+                      "call_id" : "test_call_id",
+                      "name" : "search_readme"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """, functionQuery );
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree( responseString );
+
+        when( this.mockOpenAiApiCaller
+                .getResponse( any(), any(), any(), any(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        when( this.mockEmbeddingService.getEmbedding( functionQuery )).thenReturn( queryEmbedding );
+        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
+        when( this.mockEmbeddingCacheService.getInput( searchResult.id() )).thenReturn( testSearchResult );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> responseApiService.getResponse( userQuery ));
+
+        assertEquals( "Failed to get response within 1,024 iterations.", exception.getMessage() );
+
+        for  ( int i = 0; i < iterationLimit; i++ )
+        {
+            verify( this.mockOmegaCodexUtil ).println( String.format(
+                    "Response API Call, Iteration: %,d, " +
+                    "Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000", i + 1 ));
+        }
+    }
+
+    @Test
+    void getResponse_success()
+    {
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
+
+        String expectedUserQuery        = "What is your quest?";
+        String expectedUserResponse     = "To seek the Holy Grail!";
+        String expectedFunctionQuery    = "What is my quest?";
+        String expectedFunctionResponse = "Quest Objective: Holy Grail";
+        String expectedCallId           = "test_call_id";
+        long   expectedSearchResultId   = 7;
+
+        ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
+        Embedding queryEmbedding = new Embedding( 42, queryVector );
+        SearchResult searchResult = new SearchResult( expectedSearchResultId, 0.5f );
+        List< SearchResult > searchResults = List.of( searchResult );
+
+        String responseString1 = String.format(
+                """
+                {
+                  "output":
+                  [
+                    {
+                      "type" : "function_call",
+                      "arguments" : "{\\"query\\":\\"%s\\"}",
+                      "call_id" : "%s",
+                      "name" : "search_readme"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """, expectedFunctionQuery, expectedCallId );
+
+        String responseString2 = String.format(
                 """
                 {
                   "output":
@@ -144,46 +234,63 @@ public class ResponseApiServiceTest
                   ],
                   "usage":
                   {
-                    "input_tokens": 2000,
-                    "output_tokens": 1000,
-                    "total_tokens": 3000
+                    "input_tokens": 2500,
+                    "output_tokens": 1500,
+                    "total_tokens": 4000
                   }
                 }
-                """, expectedResponse );
+                """, expectedUserResponse );
 
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode responseNode = objectMapper.readTree( responseString );
+        JsonNode responseNode1 = objectMapper.readTree( responseString1 );
+        JsonNode responseNode2 = objectMapper.readTree( responseString2 );
 
-        when( this.mockEmbeddingService.getEmbedding( queryString )).thenReturn( queryEmbedding );
-        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
-        when( this.mockEmbeddingCacheService.getInput( searchResult.id() )).thenReturn( searchResultInput );
         when( this.mockOpenAiApiCaller
-                .getResponse( any(), any(), this.requestMapCaptor.capture(), any(), anyBoolean() ))
-                .thenReturn( responseNode );
+                .getResponse( any(), any(), this.requestNodeCaptor.capture(), any(), anyBoolean() ))
+                .thenReturn( responseNode1, responseNode2 );
 
-        String actualResponse = responseApiService.getResponse( queryString );
+        when( this.mockEmbeddingService.getEmbedding( expectedFunctionQuery )).thenReturn( queryEmbedding );
+        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
+        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId )).thenReturn( expectedFunctionResponse );
 
-        assertEquals( expectedResponse, actualResponse );
+        String actualUserResponse = responseApiService.getResponse( expectedUserQuery );
+
+        assertEquals( expectedUserResponse, actualUserResponse );
 
         verify( this.mockOmegaCodexUtil ).println(
-                "Response API Call, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
+                "Response API Call, Iteration: 1, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
 
-        Map< String, Object > requestMap = this.requestMapCaptor.getValue();
-        @SuppressWarnings( "unchecked" ) List< ObjectNode > input = (List< ObjectNode >) requestMap.get( "input" );
-        String userMessage = input.get( 1 ).get( "content" ).asString();
-        assertTrue( userMessage.contains( searchResultInput ), "Context not found." );
-        assertTrue( userMessage.contains( queryString ), "Query not found." );
+        verify( this.mockOmegaCodexUtil ).println(
+                "Response API Call, Iteration: 2, Input Tokens: 2,500, Output Tokens: 1,500, Total Tokens: 4,000" );
+
+        List< ObjectNode > requestNodeList = this.requestNodeCaptor.getAllValues();
+        assertEquals( 2, requestNodeList.size() );
+
+        String actualUserQuery = requestNodeList.getFirst().path( "input" ).path( 1 ).path( "content" ).asString();
+        assertEquals( expectedUserQuery, actualUserQuery );
+
+        String actualCallId = requestNodeList.getLast().path( "input" ).path( 3 ).path( "call_id" ).asString();
+        assertEquals( expectedCallId, actualCallId );
+
+        String functionResponseJson = requestNodeList.getLast().path( "input" ).path( 3 ).path( "output" ).asString();
+        JsonNode functionResponseNode = objectMapper.readTree( functionResponseJson );
+        assertEquals( 1, functionResponseNode.size() );
+
+        long actualSearchResultId = functionResponseNode.path( 0 ).path( "id" ).asLong();
+        assertEquals( expectedSearchResultId, actualSearchResultId );
+
+        String actualFunctionResponse = functionResponseNode.path( 0 ).path( "text" ).asString();
+        assertEquals( expectedFunctionResponse, actualFunctionResponse );
     }
 
     @Test
-    void getResponseMessage_noMessage()
+    void handleOutput_noMessage_and_noFunctionCall()
     {
-        ResponseApiService responseApiService = this.getResponseApiService();
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
 
         String queryString = "What is your quest?";
-        ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
-        Embedding queryEmbedding = new Embedding( 42, queryVector );
-        List< SearchResult > searchResults = new LinkedList<>();
 
         String responseString =
                 """
@@ -203,8 +310,6 @@ public class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockEmbeddingService.getEmbedding( queryString )).thenReturn( queryEmbedding );
-        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
         when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
                 .thenReturn( responseNode );
 
@@ -212,7 +317,7 @@ public class ResponseApiServiceTest
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
-                "Failed to find response message:" +
+                "Failed to find response message or function call:" +
                 System.lineSeparator() +
                 responseNode.path( "output" ).toPrettyString();
 
@@ -221,14 +326,133 @@ public class ResponseApiServiceTest
 
     @Test
     @SuppressWarnings( "ExtractMethodRecommender" )
-    void getResponseMessage_multipleMessages()
+    void handleOutput_message_and_functionCall()
     {
-        ResponseApiService responseApiService = this.getResponseApiService();
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
 
         String queryString = "What is your quest?";
+        String testQuery = "Test Query";
         ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
         Embedding queryEmbedding = new Embedding( 42, queryVector );
-        List< SearchResult > searchResults = new LinkedList<>();
+        SearchResult searchResult = new SearchResult( 7, 0.5f );
+        List< SearchResult > searchResults = List.of( searchResult );
+        String testSearchResult = "Test Search Result";
+
+        String responseString = String.format(
+                """
+                {
+                  "output":
+                  [
+                    {
+                      "type": "message",
+                      "content":
+                      [
+                        {
+                          "text": "Test Message"
+                        }
+                      ],
+                      "role": "assistant"
+                    },
+                    {
+                        "type" : "function_call",
+                        "arguments" : "{\\"query\\":\\"%s\\"}",
+                        "call_id" : "test_call_id",
+                        "name" : "search_readme"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """, testQuery );
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree( responseString );
+
+        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        when( this.mockEmbeddingService.getEmbedding( testQuery )).thenReturn( queryEmbedding );
+        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
+        when( this.mockEmbeddingCacheService.getInput( searchResult.id() )).thenReturn( testSearchResult );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> responseApiService.getResponse( queryString ));
+
+        String expectedMessage =
+                "Received response message with function call:" +
+                System.lineSeparator() +
+                responseNode.path( "output" ).toPrettyString();
+
+        assertEquals( expectedMessage, exception.getMessage() );
+    }
+
+    @Test
+    @SuppressWarnings( "ExtractMethodRecommender" )
+    void handleOutput_noAssistantRole()
+    {
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
+
+        String queryString = "What is your quest?";
+
+        String responseString =
+                """
+                {
+                  "output":
+                  [
+                    {
+                      "type": "message",
+                      "content":
+                      [
+                        {
+                          "text": "Test Message"
+                        }
+                      ],
+                      "role": "broken"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree( responseString );
+
+        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> responseApiService.getResponse( queryString ));
+
+        String expectedMessage =
+                "Found response message from unexpected role:" +
+                System.lineSeparator() +
+                responseNode.path( "output" ).toPrettyString();
+
+        assertEquals( expectedMessage, exception.getMessage() );
+    }
+
+    @Test
+    @SuppressWarnings( "ExtractMethodRecommender" )
+    void handleOutput_multipleMessages()
+    {
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
+
+        String queryString = "What is your quest?";
 
         String responseString =
                 """
@@ -268,8 +492,6 @@ public class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockEmbeddingService.getEmbedding( queryString )).thenReturn( queryEmbedding );
-        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
         when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
                 .thenReturn( responseNode );
 
@@ -286,14 +508,13 @@ public class ResponseApiServiceTest
 
     @Test
     @SuppressWarnings( "ExtractMethodRecommender" )
-    void getResponseMessage_multipleContentElements()
+    void handleOutput_multipleContentElements()
     {
-        ResponseApiService responseApiService = this.getResponseApiService();
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
 
         String queryString = "What is your quest?";
-        ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
-        Embedding queryEmbedding = new Embedding( 42, queryVector );
-        List< SearchResult > searchResults = new LinkedList<>();
 
         ArrayNode contentNode = JsonNodeFactory.instance.arrayNode();
         for ( int i = 0; i < 1_024; i++ ) contentNode.add( JsonNodeFactory.instance.objectNode().put( "text", "foo" ));
@@ -321,8 +542,6 @@ public class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockEmbeddingService.getEmbedding( queryString )).thenReturn( queryEmbedding );
-        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
         when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
                 .thenReturn( responseNode );
 
@@ -337,10 +556,142 @@ public class ResponseApiServiceTest
         assertEquals( expectedMessage, exception.getMessage() );
     }
 
-    private ResponseApiService getResponseApiService()
+    @Test
+    @SuppressWarnings( "ExtractMethodRecommender" )
+    void handleFunctionCall_invalidArguments()
     {
-        return new ResponseApiService(
+        ResponseApiService responseApiService = new ResponseApiService(
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
+
+        String queryString = "What is your quest?";
+
+        String responseString =
+                """
+                {
+                  "output":
+                  [
+                    {
+                        "type" : "function_call",
+                        "arguments" : "This is not valid JSON.",
+                        "call_id" : "test_call_id",
+                        "name" : "search_readme"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree( responseString );
+
+        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> responseApiService.getResponse( queryString ));
+
+        String expectedMessage =
+                "Failed to deserialize arguments:" +
+                System.lineSeparator() +
+                "This is not valid JSON.";
+
+        assertEquals( expectedMessage, exception.getMessage() );
+    }
+
+    @Test
+    @SuppressWarnings( "ExtractMethodRecommender" )
+    void handleFunctionCall_invalidFunction()
+    {
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
+
+        String queryString = "What is your quest?";
+
+        String responseString =
+                """
+                {
+                  "output":
+                  [
+                    {
+                        "type" : "function_call",
+                        "arguments" : "{\\"query\\":\\"Test Query\\"}",
+                        "call_id" : "test_call_id",
+                        "name" : "invalid_function"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree( responseString );
+
+        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> responseApiService.getResponse( queryString ));
+
+        String expectedMessage =
+                "Unrecognized function:" +
+                System.lineSeparator() +
+                responseNode.path( "output" ).path( 0 ).toPrettyString();
+
+        assertEquals( expectedMessage, exception.getMessage() );
+    }
+
+    @Test
+    @SuppressWarnings( "ExtractMethodRecommender" )
+    void handleSearchReadme_emptyQuery()
+    {
+        ResponseApiService responseApiService = new ResponseApiService(
+                this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
+                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil, this.testIterationLimit );
+
+        String queryString = "What is your quest?";
+
+        String responseString =
+                """
+                {
+                  "output":
+                  [
+                    {
+                        "type" : "function_call",
+                        "arguments" : "{\\"query\\":\\"\\"}",
+                        "call_id" : "test_call_id",
+                        "name" : "search_readme"
+                    }
+                  ],
+                  "usage":
+                  {
+                    "input_tokens": 2000,
+                    "output_tokens": 1000,
+                    "total_tokens": 3000
+                  }
+                }
+                """;
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode responseNode = objectMapper.readTree( responseString );
+
+        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean() ))
+                .thenReturn( responseNode );
+
+        IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
+                () -> responseApiService.getResponse( queryString ));
+
+        assertEquals( "Query must not be empty.", exception.getMessage() );
     }
 }

@@ -26,8 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.util.Map;
+import tools.jackson.databind.node.ObjectNode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -42,8 +41,8 @@ class EmbeddingApiServiceTest
     @Mock private OmegaCodexUtil  mockOmegaCodexUtil;
     @Mock private OpenAiApiCaller mockOpenAiApiCaller;
 
-    @Captor private ArgumentCaptor< String >               startMessageCaptor;
-    @Captor private ArgumentCaptor< Map< String, Object >> requestMapCaptor;
+    @Captor private ArgumentCaptor< String >     startMessageCaptor;
+    @Captor private ArgumentCaptor< ObjectNode > requestNodeCaptor;
 
     @Test
     void testConstructor_nullOpenAiApiCaller()
@@ -119,7 +118,7 @@ class EmbeddingApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller
-                .getResponse( any(), any(), this.requestMapCaptor.capture(),
+                .getResponse( any(), any(), this.requestNodeCaptor.capture(),
                               this.startMessageCaptor.capture(), anyBoolean() ))
                 .thenReturn( responseNode );
 
@@ -128,8 +127,8 @@ class EmbeddingApiServiceTest
 
         ImmutableDoubleArray actualVector = embeddingApiService.getEmbeddingVector( expectedInput );
 
-        Map< String, Object > requestMap = this.requestMapCaptor.getValue();
-        String actualInput = (String) requestMap.get( "input" );
+        ObjectNode requestNode = this.requestNodeCaptor.getValue();
+        String actualInput = requestNode.get( "input" ).asString();
         String actualStartMessage = this.startMessageCaptor.getValue();
 
         assertEquals( expectedInput, actualInput );
