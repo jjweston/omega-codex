@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,19 +32,27 @@ class QdrantService implements AutoCloseable
 {
     private final String       collectionName;
     private final int          collectionSize;
+    private final boolean      logSummary;
     private final TaskRunner   taskRunner;
     private final QdrantClient qdrantClient;
 
     QdrantService()
     {
-        this( "omegacodex_chunks", 1_536, new TaskRunner( 200 ), new QdrantClientFactory() );
+        String              collectionName      = "omegacodex_chunks";
+        int                 collectionSize      = 1_536;
+        boolean             logSummary          = false;
+        TaskRunner          taskRunner          = new TaskRunner( 200 );
+        QdrantClientFactory qdrantClientFactory = new QdrantClientFactory();
+
+        this( collectionName, collectionSize, logSummary, taskRunner, qdrantClientFactory );
     }
 
-    QdrantService( String collectionName, int collectionSize,
+    QdrantService( String collectionName, int collectionSize, boolean logSummary,
                    TaskRunner taskRunner, QdrantClientFactory qdrantClientFactory )
     {
         this.collectionName = collectionName;
         this.collectionSize = collectionSize;
+        this.logSummary     = logSummary;
         this.taskRunner     = taskRunner;
         this.qdrantClient   = qdrantClientFactory.create();
 
@@ -75,8 +83,9 @@ class QdrantService implements AutoCloseable
                 .setVectors( VectorsFactory.vectors( embedding.vector().toFloatArray() ))
                 .build();
 
-        this.taskRunner.run( taskName, startMessage, () ->
-                this.qdrantClient.upsertAsync( this.collectionName, List.of( point )).get() );
+        this.taskRunner.run(
+                taskName, startMessage, this.logSummary,
+                () -> this.qdrantClient.upsertAsync( this.collectionName, List.of( point )).get() );
     }
 
     List< SearchResult > search( ImmutableDoubleArray vector )
@@ -90,8 +99,9 @@ class QdrantService implements AutoCloseable
                 .setQuery( nearest( vector.toFloatArray() ))
                 .build();
 
-        List< Points.ScoredPoint > points = this.taskRunner.get( taskName, () ->
-                this.qdrantClient.queryAsync( query ).get() );
+        List< Points.ScoredPoint > points = this.taskRunner.get(
+                taskName, this.logSummary,
+                () -> this.qdrantClient.queryAsync( query ).get() );
         if ( points == null ) throw new OmegaCodexException( taskName + ", Null Returned" );
 
         return points.stream().map( point -> new SearchResult( point.getId().getNum(), point.getScore() )).toList();
@@ -107,8 +117,9 @@ class QdrantService implements AutoCloseable
     {
         String taskName = "Qdrant - Check Collection Exists";
 
-        Boolean exists = this.taskRunner.get( taskName, () ->
-                this.qdrantClient.collectionExistsAsync( this.collectionName ).get() );
+        Boolean exists = this.taskRunner.get(
+                taskName, this.logSummary,
+                () -> this.qdrantClient.collectionExistsAsync( this.collectionName ).get() );
         if ( exists == null ) throw new OmegaCodexException( taskName + ", Null Returned" );
         return exists;
     }
@@ -116,7 +127,9 @@ class QdrantService implements AutoCloseable
     private void deleteCollection()
     {
         String taskName = "Qdrant - Delete Collection";
-        this.taskRunner.run( taskName, () -> qdrantClient.deleteCollectionAsync( this.collectionName ).get() );
+        this.taskRunner.run(
+                taskName, this.logSummary,
+                () -> this.qdrantClient.deleteCollectionAsync( this.collectionName ).get() );
     }
 
     private void createCollection()
@@ -128,8 +141,9 @@ class QdrantService implements AutoCloseable
                 .setSize( this.collectionSize )
                 .build();
 
-        this.taskRunner.run( taskName, () ->
-                this.qdrantClient.createCollectionAsync( this.collectionName, vectorParams ).get() );
+        this.taskRunner.run(
+                taskName, this.logSummary,
+                () -> this.qdrantClient.createCollectionAsync( this.collectionName, vectorParams ).get() );
     }
 
     private void validateVector( ImmutableDoubleArray vector )

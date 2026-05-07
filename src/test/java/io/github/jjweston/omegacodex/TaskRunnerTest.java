@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -48,8 +48,8 @@ public class TaskRunnerTest
     @Test
     void get_nullTaskName()
     {
-        IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> this.taskRunner.get( null, () -> null ));
+        IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
+                () -> this.taskRunner.get( null, false, () -> null ));
 
         assertEquals( "Task name must not be null.", exception.getMessage() );
     }
@@ -57,8 +57,8 @@ public class TaskRunnerTest
     @Test
     void get_emptyTaskName()
     {
-        IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> this.taskRunner.get( "", () -> null ));
+        IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
+                () -> this.taskRunner.get( "", false, () -> null ));
 
         assertEquals( "Task name must not be empty.", exception.getMessage() );
     }
@@ -68,8 +68,8 @@ public class TaskRunnerTest
     {
         String taskName = "get_nullTask";
 
-        IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> this.taskRunner.get( taskName, null ));
+        IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
+                () -> this.taskRunner.get( taskName, false, null ));
 
         assertEquals( "Task must not be null.", exception.getMessage() );
     }
@@ -79,9 +79,8 @@ public class TaskRunnerTest
     {
         String taskName = "get_interruptedException";
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class,
-                () -> this.taskRunner.get( taskName, () -> { throw new InterruptedException(); } ));
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.taskRunner.get( taskName, false, () -> { throw new InterruptedException(); } ));
 
         assertEquals( taskName + ", Task Interrupted", exception.getMessage() );
         verify( this.mockOmegaCodexUtil ).interruptThread();
@@ -93,9 +92,8 @@ public class TaskRunnerTest
         String taskName = "get_omegaCodexException";
         String message = "Test Message";
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class,
-                () -> this.taskRunner.get( taskName, () -> { throw new OmegaCodexException( message ); } ));
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.taskRunner.get( taskName, false, () -> { throw new OmegaCodexException( message ); } ));
 
         assertEquals( message, exception.getMessage() );
     }
@@ -106,9 +104,8 @@ public class TaskRunnerTest
         String taskName = "get_exception";
         Exception innerException = new Exception( "Inner Exception" );
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class,
-                () -> this.taskRunner.get( taskName, () -> { throw innerException; } ));
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.taskRunner.get( taskName, false, () -> { throw innerException; } ));
 
         assertEquals( taskName + ", Exception Occurred", exception.getMessage() );
         assertEquals( innerException, exception.getCause() );
@@ -132,12 +129,12 @@ public class TaskRunnerTest
 
         doThrow( new InterruptedException() ).when( this.mockOmegaCodexUtil ).sleepThread( 2_500 );
 
-        assertEquals( 42, this.taskRunner.get( taskName, null,            () -> 42 ));
-        assertEquals( 43, this.taskRunner.get( taskName, "",              () -> 43 ));
-        assertEquals( 44, this.taskRunner.get( taskName, "Start Message", () -> 44 ));
+        assertEquals( 42, this.taskRunner.get( taskName, null,            true, () -> 42 ));
+        assertEquals( 43, this.taskRunner.get( taskName, "",              true, () -> 43 ));
+        assertEquals( 44, this.taskRunner.get( taskName, "Start Message", true, () -> 44 ));
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.taskRunner.get( taskName, () -> null ));
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.taskRunner.get( taskName, true, () -> null ));
 
         assertEquals( taskName + ", Sleep Interrupted", exception.getMessage() );
 

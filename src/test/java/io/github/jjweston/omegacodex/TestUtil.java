@@ -18,6 +18,8 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
+import io.qdrant.client.QdrantClient;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -40,5 +42,15 @@ class TestUtil
         }
 
         return resourcePath;
+    }
+
+    static void deleteCollection(
+            QdrantClientFactory qdrantClientFactory, String collectionName, TaskRunner taskRunner )
+    {
+        try( QdrantClient qdrantClient = qdrantClientFactory.create() )
+        {
+            taskRunner.run( "Test Util - Delete Collection", false,
+                    () -> qdrantClient.deleteCollectionAsync( collectionName ).get() );
+        }
     }
 }

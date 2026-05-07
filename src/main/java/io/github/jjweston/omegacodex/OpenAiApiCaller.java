@@ -57,8 +57,8 @@ public class OpenAiApiCaller
         this.taskRunner         = taskRunner;
     }
 
-    JsonNode getResponse(
-            String taskName, String apiEndpoint, ObjectNode requestNode, String startMessage, boolean debug )
+    JsonNode getResponse( String taskName, String apiEndpoint, ObjectNode requestNode, String startMessage,
+                          boolean logApiSummary, boolean logApiDetails )
     {
         if ( taskName == null ) throw new IllegalArgumentException( "Task name must not be null." );
         if ( apiEndpoint == null ) throw new IllegalArgumentException( "API endpoint must not be null." );
@@ -68,7 +68,7 @@ public class OpenAiApiCaller
 
         String requestString = objectMapper.writeValueAsString( requestNode );
 
-        if ( debug )
+        if ( logApiDetails )
         {
             String debugRequestString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString( requestNode );
 
@@ -85,13 +85,13 @@ public class OpenAiApiCaller
                 .POST( requestString )
                 .build();
 
-        HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, () ->
-                this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
+        HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, logApiSummary,
+                () -> this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
 
         int statusCode = response.statusCode();
         String responseString = response.body();
 
-        if ( debug )
+        if ( logApiDetails )
         {
             omegaCodexUtil.println( "----------------------------------------------------------------------" );
             omegaCodexUtil.println( "Status Code: " + statusCode );

@@ -18,7 +18,6 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import io.qdrant.client.QdrantClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -38,12 +37,7 @@ public class ResponseApiServiceIT
     @AfterEach
     void tearDown()
     {
-        try( QdrantClient qdrantClient = this.qdrantClientFactory.create() )
-        {
-            String taskName = "Response API Service Integration Test - Delete Collection";
-
-            this.taskRunner.run( taskName, () -> qdrantClient.deleteCollectionAsync( this.collectionName ).get() );
-        }
+        TestUtil.deleteCollection( this.qdrantClientFactory, this.collectionName, this.taskRunner );
     }
 
     @Test
@@ -87,7 +81,7 @@ public class ResponseApiServiceIT
 
         try ( Connection connection = dataSource.getConnection();
               QdrantService qdrantService = new QdrantService(
-                      this.collectionName, collectionSize, this.taskRunner, this.qdrantClientFactory ))
+                      this.collectionName, collectionSize, false, this.taskRunner, this.qdrantClientFactory ))
         {
             OpenAiApiCaller openAiApiCaller = new OpenAiApiCaller();
             EmbeddingCacheService embeddingCacheService = new EmbeddingCacheService( connection );

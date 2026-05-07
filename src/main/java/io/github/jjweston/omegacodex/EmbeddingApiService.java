@@ -70,7 +70,7 @@ class EmbeddingApiService
         requestNode.put( "input", input );
 
         JsonNode responseNode = this.openAiApiCaller.getResponse(
-                this.taskName, this.apiEndpoint, requestNode, startMessage, this.debug );
+                this.taskName, this.apiEndpoint, requestNode, startMessage, true, this.debug );
 
         int totalTokens = responseNode.path( "usage" ).path( "total_tokens" ).intValue();
         this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", this.taskName, totalTokens ));
