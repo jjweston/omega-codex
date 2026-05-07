@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,12 +40,12 @@ class TaskRunner
         this.omegaCodexUtil = omegaCodexUtil;
     }
 
-    < T > T get( String taskName, ThrowingSupplier< T > task )
+    < T > T get( String taskName, boolean logTaskSummary, ThrowingSupplier< T > task )
     {
-        return this.get( taskName, null, task );
+        return this.get( taskName, null, logTaskSummary, task );
     }
 
-    < T > T get( String taskName, String startMessage, ThrowingSupplier< T > task )
+    < T > T get( String taskName, String startMessage, boolean logTaskSummary, ThrowingSupplier< T > task )
     {
         if ( taskName == null ) throw new IllegalArgumentException( "Task name must not be null." );
         if ( taskName.isEmpty() ) throw new IllegalArgumentException( "Task name must not be empty." );
@@ -59,7 +59,11 @@ class TaskRunner
 
             if ( delayMs > 0 )
             {
-                this.omegaCodexUtil.println( String.format( taskName + ", Sleeping, Duration: %,d ms", delayMs ));
+                if ( logTaskSummary )
+                {
+                    this.omegaCodexUtil.println( String.format( taskName + ", Sleeping, Duration: %,d ms", delayMs ));
+                }
+
                 try { this.omegaCodexUtil.sleepThread( delayMs ); }
                 catch ( InterruptedException e )
                 {
@@ -70,10 +74,13 @@ class TaskRunner
         }
         else this.runPreviously = true;
 
-        String message = taskName + ", Starting";
-        if (( startMessage != null ) && ( !startMessage.isEmpty() )) message += ", " + startMessage;
+        if ( logTaskSummary )
+        {
+            String message = taskName + ", Starting";
+            if (( startMessage != null ) && ( !startMessage.isEmpty() )) message += ", " + startMessage;
+            this.omegaCodexUtil.println( message );
+        }
 
-        this.omegaCodexUtil.println( message );
         long startTime = this.omegaCodexUtil.nanoTime();
         this.previousStart = startTime;
 
@@ -89,18 +96,22 @@ class TaskRunner
 
         long stopTime = this.omegaCodexUtil.nanoTime();
         long deltaMs = ( stopTime - startTime ) / 1_000_000;
-        this.omegaCodexUtil.println( String.format( taskName + ", Complete, Duration: %,d ms", deltaMs ));
+
+        if ( logTaskSummary )
+        {
+            this.omegaCodexUtil.println( String.format( taskName + ", Complete, Duration: %,d ms", deltaMs ));
+        }
 
         return result;
     }
 
-    void run( String taskName, ThrowingRunnable task )
+    void run( String taskName, boolean logTaskSummary, ThrowingRunnable task )
     {
-        this.run( taskName, null, task );
+        this.run( taskName, null, logTaskSummary, task );
     }
 
-    void run( String taskName, String startMessage, ThrowingRunnable task )
+    void run( String taskName, String startMessage, boolean logTaskSummary, ThrowingRunnable task )
     {
-        this.get( taskName, startMessage, () -> { task.run(); return null; } );
+        this.get( taskName, startMessage, logTaskSummary, () -> { task.run(); return null; } );
     }
 }

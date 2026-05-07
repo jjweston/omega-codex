@@ -160,7 +160,7 @@ public class ResponseApiService
                     .set( "include", includeNode );
 
             JsonNode responseNode = this.openAiApiCaller.getResponse(
-                    this.taskName, this.apiEndpoint, requestNode, null, this.logApiDetails );
+                    this.taskName, this.apiEndpoint, requestNode, null, this.logApiSummary, this.logApiDetails );
 
             if ( this.logApiSummary )
             {

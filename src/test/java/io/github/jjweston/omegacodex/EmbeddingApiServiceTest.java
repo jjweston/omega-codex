@@ -119,7 +119,7 @@ class EmbeddingApiServiceTest
 
         when( this.mockOpenAiApiCaller
                 .getResponse( any(), any(), this.requestNodeCaptor.capture(),
-                              this.startMessageCaptor.capture(), anyBoolean() ))
+                              this.startMessageCaptor.capture(), anyBoolean(), anyBoolean() ))
                 .thenReturn( responseNode );
 
         EmbeddingApiService embeddingApiService =

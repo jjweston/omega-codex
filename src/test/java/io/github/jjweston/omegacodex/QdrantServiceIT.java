@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-import io.qdrant.client.QdrantClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,12 +37,7 @@ public class QdrantServiceIT
     @AfterEach
     void tearDown()
     {
-        try( QdrantClient qdrantClient = this.qdrantClientFactory.create() )
-        {
-            String taskName = "Qdrant Service Integration Test - Delete Collection";
-
-            this.taskRunner.run( taskName, () -> qdrantClient.deleteCollectionAsync( this.collectionName ).get() );
-        }
+        TestUtil.deleteCollection( this.qdrantClientFactory, this.collectionName, this.taskRunner );
     }
 
     @Test
@@ -62,7 +56,7 @@ public class QdrantServiceIT
         expectedResults.add( new SearchResult( 5, 0.07286711f ));
 
         try ( QdrantService qdrantService = new QdrantService(
-                this.collectionName, collectionSize, this.taskRunner, this.qdrantClientFactory ))
+                this.collectionName, collectionSize, false, this.taskRunner, this.qdrantClientFactory ))
         {
             for ( int i = 0; i < inputCount; i++ )
             {

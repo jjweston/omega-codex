@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class QdrantServiceTest
         OmegaCodexException exception = assertThrowsExactly(
                 OmegaCodexException.class, () ->
                 {
-                    try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
+                    try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, false ))
                     {
                         fail( "Should not get here. qdrantService: " + qdrantService );
                     }
@@ -89,7 +89,7 @@ public class QdrantServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () ->
                 {
-                    try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
+                    try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, false ))
                     {
                         qdrantService.upsert( null );
                     }
@@ -112,7 +112,7 @@ public class QdrantServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () ->
                 {
-                    try ( QdrantService qdrantService = this.createQdrantService( expectedCollectionSize ))
+                    try ( QdrantService qdrantService = this.createQdrantService( expectedCollectionSize, false ))
                     {
                         qdrantService.upsert( testEmbedding );
                     }
@@ -138,7 +138,7 @@ public class QdrantServiceTest
         when( this.mockQdrantClient.upsertAsync( this.testCollectionName, List.of( testPoint )))
                 .thenReturn( this.mockUpdateResultListenableFuture );
 
-        try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
+        try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, true ))
         {
             qdrantService.upsert( testEmbedding );
         }
@@ -154,7 +154,7 @@ public class QdrantServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () ->
                 {
-                    try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
+                    try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, false ))
                     {
                         qdrantService.search( null );
                     }
@@ -175,7 +175,7 @@ public class QdrantServiceTest
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () ->
                 {
-                    try ( QdrantService qdrantService = this.createQdrantService( expectedCollectionSize ))
+                    try ( QdrantService qdrantService = this.createQdrantService( expectedCollectionSize, false ))
                     {
                         qdrantService.search( testVector );
                     }
@@ -217,7 +217,7 @@ public class QdrantServiceTest
         when( this.mockQdrantClient.queryAsync( testQuery )).thenReturn( this.mockScoredPointsListenableFuture );
         when( this.mockScoredPointsListenableFuture.get() ).thenReturn( testScoredPoints );
 
-        try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize ))
+        try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, false ))
         {
             List< SearchResult > actualResults = qdrantService.search( testVector );
             assertThat( actualResults ).as( "Search Results" ).containsExactlyElementsOf( expectedResults );
@@ -241,10 +241,11 @@ public class QdrantServiceTest
                 .thenReturn( this.mockCollectionResponseListenableFuture );
     }
 
-    private QdrantService createQdrantService( int collectionSize )
+    private QdrantService createQdrantService( int collectionSize, boolean logSummary )
     {
         TaskRunner taskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil );
-        return new QdrantService( this.testCollectionName, collectionSize, taskRunner, this.mockQdrantClientFactory );
+        return new QdrantService(
+                this.testCollectionName, collectionSize, logSummary, taskRunner, this.mockQdrantClientFactory );
     }
 
     private Points.ScoredPoint mockScoredPoint( long id, float score )
