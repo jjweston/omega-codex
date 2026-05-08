@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,20 +26,25 @@ import java.sql.Statement;
 
 class EmbeddingCacheService
 {
+    private final boolean        logSummary;
     private final Connection     connection;
     private final OmegaCodexUtil omegaCodexUtil;
 
     EmbeddingCacheService( Connection connection )
     {
-        this( connection, new OmegaCodexUtil() );
+        boolean logSummary = false;
+
+        this( logSummary, connection, new OmegaCodexUtil() );
     }
 
-    EmbeddingCacheService( Connection connection, OmegaCodexUtil omegaCodexUtil )
+    EmbeddingCacheService( boolean logSummary, Connection connection, OmegaCodexUtil omegaCodexUtil )
     {
         if ( connection == null ) throw new IllegalArgumentException( "Connection must not be null." );
 
+        this.logSummary     = logSummary;
         this.connection     = connection;
         this.omegaCodexUtil = omegaCodexUtil;
+
         this.init();
     }
 
@@ -92,7 +97,12 @@ class EmbeddingCacheService
             if ( generatedKeys.next() )
             {
                 long id = generatedKeys.getLong( 1 );
-                this.omegaCodexUtil.println( String.format( "Cache New Embedding, ID: %,d", id ));
+
+                if ( this.logSummary )
+                {
+                    this.omegaCodexUtil.println( String.format( "Cache New Embedding, ID: %,d", id ));
+                }
+
                 return id;
             }
             else throw new OmegaCodexException( "Failed to get ID of added embedding." );
