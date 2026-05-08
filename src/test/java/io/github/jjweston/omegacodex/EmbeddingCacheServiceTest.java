@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
@@ -40,7 +42,7 @@ class EmbeddingCacheServiceTest
     private final Embedding testEmbedding =
             new Embedding( 42, new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } ));
 
-    @Mock private OmegaCodexUtil    omegaCodexUtil;
+    @Mock private OmegaCodexUtil    mockOmegaCodexUtil;
     @Mock private Connection        mockConnection;
     @Mock private PreparedStatement mockPreparedStatement;
     @Mock private ResultSet         mockResultSet;
@@ -49,8 +51,8 @@ class EmbeddingCacheServiceTest
     void testConstructor_nullConnection()
     {
         @SuppressWarnings( "DataFlowIssue" )
-        IllegalArgumentException exception = assertThrowsExactly(
-                IllegalArgumentException.class, () -> new EmbeddingCacheService( null, this.omegaCodexUtil ));
+        IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
+                () -> new EmbeddingCacheService( false, null, this.mockOmegaCodexUtil ));
 
         assertEquals( "Connection must not be null.", exception.getMessage() );
     }
@@ -58,7 +60,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testGetEmbedding_nullInput() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> embeddingCacheService.getEmbedding( null ));
@@ -69,7 +71,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testGetEmbedding_emptyInput() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> embeddingCacheService.getEmbedding( "" ));
@@ -80,7 +82,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testGetEmbedding_cacheHit() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( true );
@@ -94,7 +96,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testGetEmbedding_cacheMiss() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( false );
@@ -106,7 +108,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testCacheEmbedding_nullInput() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> embeddingCacheService.cacheEmbedding( null, this.testEmbedding.vector() ));
@@ -117,7 +119,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testCacheEmbedding_emptyInput() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> embeddingCacheService.cacheEmbedding( "", this.testEmbedding.vector() ));
@@ -128,7 +130,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testCacheEmbedding_nullVector() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> embeddingCacheService.cacheEmbedding( "Test", null ));
@@ -139,7 +141,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testCacheEmbedding_emptyVector() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> embeddingCacheService.cacheEmbedding( "Test", new ImmutableDoubleArray( new double[] {} )));
@@ -151,7 +153,7 @@ class EmbeddingCacheServiceTest
     @SuppressWarnings( "MagicConstant" )
     void testCacheEmbedding_duplicate() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
         when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 0 );
@@ -166,20 +168,23 @@ class EmbeddingCacheServiceTest
     @SuppressWarnings( "MagicConstant" )
     void testCacheEmbedding_success() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( true );
 
         when( this.mockConnection.prepareStatement( any(), anyInt() )).thenReturn( this.mockPreparedStatement );
         when( this.mockPreparedStatement.executeUpdate() ).thenReturn( 1 );
         when( this.mockPreparedStatement.getGeneratedKeys() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( true );
-        when( this.mockResultSet.getLong( 1 )).thenReturn( 42L );
-        assertEquals( 42, embeddingCacheService.cacheEmbedding( "Test", this.testEmbedding.vector() ));
+        when( this.mockResultSet.getLong( 1 )).thenReturn( 1_042L );
+        assertEquals( 1_042, embeddingCacheService.cacheEmbedding( "Test", this.testEmbedding.vector() ));
+
+        verify( this.mockOmegaCodexUtil ).println( "Cache New Embedding, ID: 1,042" );
+        verifyNoMoreInteractions( this.mockOmegaCodexUtil );
     }
 
     @Test
     void testGetInput_notFound() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( false );
@@ -193,7 +198,7 @@ class EmbeddingCacheServiceTest
     @Test
     void testGetInput_success() throws Exception
     {
-        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService();
+        EmbeddingCacheService embeddingCacheService = this.getEmbeddingCacheService( false );
 
         String testInput = "Test Input";
 
@@ -204,9 +209,9 @@ class EmbeddingCacheServiceTest
         assertEquals( testInput, embeddingCacheService.getInput( 42 ));
     }
 
-    private EmbeddingCacheService getEmbeddingCacheService() throws Exception
+    private EmbeddingCacheService getEmbeddingCacheService( boolean logSummary ) throws Exception
     {
         when( this.mockConnection.prepareStatement( any() )).thenReturn( this.mockPreparedStatement );
-        return new EmbeddingCacheService( this.mockConnection, this.omegaCodexUtil );
+        return new EmbeddingCacheService( logSummary, this.mockConnection, this.mockOmegaCodexUtil);
     }
 }
