@@ -28,16 +28,21 @@ class EmbeddingApiService
     private final String          apiEndpoint;
     private final String          model;
     private final int             inputLimit;
-    private final boolean         debug;
+    private final boolean         logApiSummary;
+    private final boolean         logApiDetails;
     private final OpenAiApiCaller openAiApiCaller;
     private final OmegaCodexUtil  omegaCodexUtil;
 
     EmbeddingApiService( OpenAiApiCaller openAiApiCaller )
     {
-        this( openAiApiCaller, new OmegaCodexUtil() );
+        boolean logApiSummary = false;
+        boolean logApiDetails = false;
+
+        this( logApiSummary, logApiDetails, openAiApiCaller, new OmegaCodexUtil() );
     }
 
-    EmbeddingApiService( OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
+    EmbeddingApiService( boolean logApiSummary, boolean logApiDetails,
+                         OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
     {
         if ( openAiApiCaller == null ) throw new IllegalArgumentException( "OpenAI API caller must not be null." );
 
@@ -45,7 +50,8 @@ class EmbeddingApiService
         this.apiEndpoint     = "https://api.openai.com/v1/embeddings";
         this.model           = "text-embedding-3-small";
         this.inputLimit      = 20_000;
-        this.debug           = false;
+        this.logApiSummary   = logApiSummary;
+        this.logApiDetails   = logApiDetails;
         this.openAiApiCaller = openAiApiCaller;
         this.omegaCodexUtil  = omegaCodexUtil;
     }
@@ -70,10 +76,13 @@ class EmbeddingApiService
         requestNode.put( "input", input );
 
         JsonNode responseNode = this.openAiApiCaller.getResponse(
-                this.taskName, this.apiEndpoint, requestNode, startMessage, true, this.debug );
+                this.taskName, this.apiEndpoint, requestNode, startMessage, this.logApiSummary, this.logApiDetails );
 
-        int totalTokens = responseNode.path( "usage" ).path( "total_tokens" ).intValue();
-        this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", this.taskName, totalTokens ));
+        if ( this.logApiSummary )
+        {
+            int totalTokens = responseNode.path( "usage" ).path( "total_tokens" ).intValue();
+            this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", this.taskName, totalTokens ));
+        }
 
         JsonNode embeddingNode = responseNode.path( "data" ).get( 0 ).path( "embedding" );
         double[] vector = embeddingNode.valueStream().mapToDouble( JsonNode::asDouble ).toArray();
