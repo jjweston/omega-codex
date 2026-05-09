@@ -21,9 +21,6 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 50
     groups:
-      org-mockito:
-        patterns:
-          - "org.mockito:*"
       testing-plugins:
         patterns:
           - "org.apache.maven.plugins:maven-failsafe-plugin"
