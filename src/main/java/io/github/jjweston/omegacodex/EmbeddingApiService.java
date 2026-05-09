@@ -22,6 +22,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 class EmbeddingApiService
 {
     private final String          taskName;
@@ -30,6 +33,7 @@ class EmbeddingApiService
     private final int             inputLimit;
     private final boolean         logApiSummary;
     private final boolean         logApiDetails;
+    private final List< Pattern > embeddedJsonPatterns;
     private final OpenAiApiCaller openAiApiCaller;
     private final OmegaCodexUtil  omegaCodexUtil;
 
@@ -46,14 +50,15 @@ class EmbeddingApiService
     {
         if ( openAiApiCaller == null ) throw new IllegalArgumentException( "OpenAI API caller must not be null." );
 
-        this.taskName        = "Embedding API Call";
-        this.apiEndpoint     = "https://api.openai.com/v1/embeddings";
-        this.model           = "text-embedding-3-small";
-        this.inputLimit      = 20_000;
-        this.logApiSummary   = logApiSummary;
-        this.logApiDetails   = logApiDetails;
-        this.openAiApiCaller = openAiApiCaller;
-        this.omegaCodexUtil  = omegaCodexUtil;
+        this.taskName             = "Embedding API Call";
+        this.apiEndpoint          = "https://api.openai.com/v1/embeddings";
+        this.model                = "text-embedding-3-small";
+        this.inputLimit           = 20_000;
+        this.logApiSummary        = logApiSummary;
+        this.logApiDetails        = logApiDetails;
+        this.embeddedJsonPatterns = List.of();
+        this.openAiApiCaller      = openAiApiCaller;
+        this.omegaCodexUtil       = omegaCodexUtil;
     }
 
     ImmutableDoubleArray getEmbeddingVector( String input )
@@ -76,7 +81,8 @@ class EmbeddingApiService
         requestNode.put( "input", input );
 
         JsonNode responseNode = this.openAiApiCaller.getResponse(
-                this.taskName, this.apiEndpoint, requestNode, startMessage, this.logApiSummary, this.logApiDetails );
+                this.taskName, this.apiEndpoint, requestNode, startMessage,
+                this.logApiSummary, this.logApiDetails, this.embeddedJsonPatterns );
 
         if ( this.logApiSummary )
         {

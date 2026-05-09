@@ -25,6 +25,7 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class ResponseApiService
 {
@@ -35,6 +36,7 @@ public class ResponseApiService
     private final boolean               logApiSummary;
     private final boolean               logApiDetails;
     private final boolean               logFunctionCalls;
+    private final List< Pattern >       embeddedJsonPatterns;
     private final ObjectMapper          objectMapper;
     private final EmbeddingCacheService embeddingCacheService;
     private final EmbeddingService      embeddingService;
@@ -73,6 +75,10 @@ public class ResponseApiService
         this.logApiSummary         = logApiSummary;
         this.logApiDetails         = logApiDetails;
         this.logFunctionCalls      = logFunctionCalls;
+        this.embeddedJsonPatterns  = List.of(
+                Pattern.compile( "^/request/input/\\d+/arguments$" ),
+                Pattern.compile( "^/request/input/\\d+/output$" ),
+                Pattern.compile( "^/response/output/\\d+/arguments" ));
         this.objectMapper          = new ObjectMapper();
         this.embeddingCacheService = embeddingCacheService;
         this.embeddingService      = embeddingService;
@@ -160,7 +166,8 @@ public class ResponseApiService
                     .set( "include", includeNode );
 
             JsonNode responseNode = this.openAiApiCaller.getResponse(
-                    this.taskName, this.apiEndpoint, requestNode, null, this.logApiSummary, this.logApiDetails );
+                    this.taskName, this.apiEndpoint, requestNode, null,
+                    this.logApiSummary, this.logApiDetails, this.embeddedJsonPatterns );
 
             if ( this.logApiSummary )
             {
