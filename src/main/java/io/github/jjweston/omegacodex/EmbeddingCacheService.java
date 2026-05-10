@@ -26,24 +26,24 @@ import java.sql.Statement;
 
 class EmbeddingCacheService
 {
-    private final boolean        logSummary;
-    private final Connection     connection;
-    private final OmegaCodexUtil omegaCodexUtil;
+    private final boolean          logSummary;
+    private final Connection       connection;
+    private final OmegaCodexLogger omegaCodexLogger;
 
     EmbeddingCacheService( Connection connection )
     {
         boolean logSummary = false;
 
-        this( logSummary, connection, new OmegaCodexUtil() );
+        this( logSummary, connection, new OmegaCodexLogger() );
     }
 
-    EmbeddingCacheService( boolean logSummary, Connection connection, OmegaCodexUtil omegaCodexUtil )
+    EmbeddingCacheService( boolean logSummary, Connection connection, OmegaCodexLogger omegaCodexLogger )
     {
         if ( connection == null ) throw new IllegalArgumentException( "Connection must not be null." );
 
-        this.logSummary     = logSummary;
-        this.connection     = connection;
-        this.omegaCodexUtil = omegaCodexUtil;
+        this.logSummary       = logSummary;
+        this.connection       = connection;
+        this.omegaCodexLogger = omegaCodexLogger;
 
         this.init();
     }
@@ -100,7 +100,7 @@ class EmbeddingCacheService
 
                 if ( this.logSummary )
                 {
-                    this.omegaCodexUtil.println( String.format( "Cache New Embedding, ID: %,d", id ));
+                    this.omegaCodexLogger.println( String.format( "Cache New Embedding, ID: %,d", id ));
                 }
 
                 return id;

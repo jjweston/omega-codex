@@ -30,19 +30,21 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
 public class TaskRunnerTest
 {
-    @Mock private OmegaCodexUtil mockOmegaCodexUtil;
+    @Mock private OmegaCodexUtil   mockOmegaCodexUtil;
+    @Mock private OmegaCodexLogger mockOmegaCodexLogger;
 
     private TaskRunner taskRunner;
 
     @BeforeEach
     void setUp()
     {
-        this.taskRunner = new TaskRunner( 5_000, this.mockOmegaCodexUtil );
+        this.taskRunner = new TaskRunner( 5_000, this.mockOmegaCodexUtil, this.mockOmegaCodexLogger );
     }
 
     @Test
@@ -138,15 +140,18 @@ public class TaskRunnerTest
 
         assertEquals( taskName + ", Sleep Interrupted", exception.getMessage() );
 
-        InOrder inOrder = inOrder( this.mockOmegaCodexUtil );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Starting" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Complete, Duration: 1,250 ms" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Starting" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Complete, Duration: 1,500 ms" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Starting, Start Message" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Complete, Duration: 1,750 ms" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( taskName + ", Sleeping, Duration: 2,500 ms" );
+        InOrder inOrder = inOrder( this.mockOmegaCodexUtil, this.mockOmegaCodexLogger );
+
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Starting" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Complete, Duration: 1,250 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Starting" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Complete, Duration: 1,500 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Starting, Start Message" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Complete, Duration: 1,750 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( taskName + ", Sleeping, Duration: 2,500 ms" );
         inOrder.verify( this.mockOmegaCodexUtil ).interruptThread();
+
         inOrder.verifyNoMoreInteractions();
+        verifyNoMoreInteractions( this.mockOmegaCodexUtil, this.mockOmegaCodexLogger );
     }
 }

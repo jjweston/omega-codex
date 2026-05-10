@@ -23,21 +23,23 @@ class TaskRunner
     @FunctionalInterface interface ThrowingRunnable { void run() throws Exception; }
     @FunctionalInterface interface ThrowingSupplier< T > { T get() throws Exception; }
 
-    private final long           rateLimitDelay;
-    private final OmegaCodexUtil omegaCodexUtil;
+    private final long             rateLimitDelay;
+    private final OmegaCodexUtil   omegaCodexUtil;
+    private final OmegaCodexLogger omegaCodexLogger;
 
     private boolean runPreviously = false;
     private long    previousStart;
 
     TaskRunner( long rateLimitDelay )
     {
-        this( rateLimitDelay, new OmegaCodexUtil() );
+        this( rateLimitDelay, new OmegaCodexUtil(), new  OmegaCodexLogger() );
     }
 
-    TaskRunner( long rateLimitDelay, OmegaCodexUtil omegaCodexUtil )
+    TaskRunner( long rateLimitDelay, OmegaCodexUtil omegaCodexUtil, OmegaCodexLogger omegaCodexLogger )
     {
-        this.rateLimitDelay = rateLimitDelay;
-        this.omegaCodexUtil = omegaCodexUtil;
+        this.rateLimitDelay   = rateLimitDelay;
+        this.omegaCodexUtil   = omegaCodexUtil;
+        this.omegaCodexLogger = omegaCodexLogger;
     }
 
     < T > T get( String taskName, boolean logTaskSummary, ThrowingSupplier< T > task )
@@ -61,7 +63,7 @@ class TaskRunner
             {
                 if ( logTaskSummary )
                 {
-                    this.omegaCodexUtil.println( String.format( taskName + ", Sleeping, Duration: %,d ms", delayMs ));
+                    this.omegaCodexLogger.println( String.format( taskName + ", Sleeping, Duration: %,d ms", delayMs ));
                 }
 
                 try { this.omegaCodexUtil.sleepThread( delayMs ); }
@@ -78,7 +80,7 @@ class TaskRunner
         {
             String message = taskName + ", Starting";
             if (( startMessage != null ) && ( !startMessage.isEmpty() )) message += ", " + startMessage;
-            this.omegaCodexUtil.println( message );
+            this.omegaCodexLogger.println( message );
         }
 
         long startTime = this.omegaCodexUtil.nanoTime();
@@ -99,7 +101,7 @@ class TaskRunner
 
         if ( logTaskSummary )
         {
-            this.omegaCodexUtil.println( String.format( taskName + ", Complete, Duration: %,d ms", deltaMs ));
+            this.omegaCodexLogger.println( String.format( taskName + ", Complete, Duration: %,d ms", deltaMs ));
         }
 
         return result;

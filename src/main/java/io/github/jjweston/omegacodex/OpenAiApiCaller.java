@@ -39,7 +39,7 @@ public class OpenAiApiCaller
     private final Environment        environment;
     private final HttpRequestBuilder httpRequestBuilder;
     private final HttpClient         httpClient;
-    private final OmegaCodexUtil     omegaCodexUtil;
+    private final OmegaCodexLogger   omegaCodexLogger;
     private final TaskRunner         taskRunner;
     private final ObjectMapper       objectMapper;
     private final ObjectMapper       yamlObjectMapper;
@@ -50,18 +50,18 @@ public class OpenAiApiCaller
               new Environment(),
               new HttpRequestBuilder(),
               HttpClient.newHttpClient(),
-              new OmegaCodexUtil(),
+              new OmegaCodexLogger(),
               new TaskRunner( 200 ));
     }
 
     OpenAiApiCaller( String apiKeyVarName, Environment environment, HttpRequestBuilder httpRequestBuilder,
-                     HttpClient httpClient, OmegaCodexUtil omegaCodexUtil, TaskRunner taskRunner )
+                     HttpClient httpClient, OmegaCodexLogger omegaCodexLogger, TaskRunner taskRunner )
     {
         this.apiKeyVarName      = apiKeyVarName;
         this.environment        = environment;
         this.httpRequestBuilder = httpRequestBuilder;
         this.httpClient         = httpClient;
-        this.omegaCodexUtil     = omegaCodexUtil;
+        this.omegaCodexLogger   = omegaCodexLogger;
         this.taskRunner         = taskRunner;
         this.objectMapper       = new ObjectMapper();
         this.yamlObjectMapper   = YAMLMapper.builder()
@@ -85,10 +85,10 @@ public class OpenAiApiCaller
             String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString(
                     this.expandEmbeddedJson( JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns ));
 
-            omegaCodexUtil.println( "----------------------------------------------------------------------" );
-            omegaCodexUtil.println( "Request:" );
-            omegaCodexUtil.println( debugRequestString );
-            omegaCodexUtil.println( "----------------------------------------------------------------------" );
+            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
+            this.omegaCodexLogger.println( "Request:" );
+            this.omegaCodexLogger.println( debugRequestString );
+            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
         }
 
         HttpRequest request = this.httpRequestBuilder.reset()
@@ -118,11 +118,11 @@ public class OpenAiApiCaller
             String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString(
                     this.expandEmbeddedJson( JsonPointer.compile( "/response" ), responseNode, embeddedJsonPatterns ));
 
-            omegaCodexUtil.println( "----------------------------------------------------------------------" );
-            omegaCodexUtil.println( "Status Code: " + statusCode );
-            omegaCodexUtil.println( "Response:" );
-            omegaCodexUtil.println( debugResponseString );
-            omegaCodexUtil.println( "----------------------------------------------------------------------" );
+            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
+            this.omegaCodexLogger.println( "Status Code: " + statusCode );
+            this.omegaCodexLogger.println( "Response:" );
+            this.omegaCodexLogger.println( debugResponseString );
+            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
         }
 
         if ( statusCode != 200 )
@@ -150,7 +150,7 @@ public class OpenAiApiCaller
                 }
                 catch ( JacksonException _ )
                 {
-                    this.omegaCodexUtil.println(
+                    this.omegaCodexLogger.println(
                             "Failed to deserialize embedded JSON for path: " + pathString + ", JSON: " + nodeString );
                 }
             }
