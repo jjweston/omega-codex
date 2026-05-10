@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.databind.JsonNode;
@@ -36,7 +37,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
@@ -50,6 +52,7 @@ public class OpenAIApiCallerTest
     @Mock private HttpRequestBuilder     mockHttpRequestBuilder;
     @Mock private HttpClient             mockHttpClient;
     @Mock private OmegaCodexUtil         mockOmegaCodexUtil;
+    @Mock private OmegaCodexLogger       mockOmegaCodexLogger;
     @Mock private HttpResponse< String > mockHttpResponse;
 
     @Captor private ArgumentCaptor< String > requestBodyCaptor;
@@ -207,15 +210,21 @@ public class OpenAIApiCallerTest
         assertEquals( expectedRequestNode, actualRequestNode );
         assertEquals( expectedResponseNode, actualResponseNode );
 
-        verify( this.mockOmegaCodexUtil ).println( "OpenAIApiCallerTest, Starting, Start Message" );
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
+
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
+
+        inOrder.verifyNoMoreInteractions();
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
     }
 
     private OpenAiApiCaller createOpenAiApiCaller()
     {
-        TaskRunner testTaskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil );
+        TaskRunner testTaskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil, this.mockOmegaCodexLogger );
 
         return new OpenAiApiCaller( this.testApiKeyVarName, this.mockEnvironment, this.mockHttpRequestBuilder,
-                                    this.mockHttpClient, this.mockOmegaCodexUtil, testTaskRunner );
+                                    this.mockHttpClient, this.mockOmegaCodexLogger, testTaskRunner );
     }
 
     private void mockApiCall( int statusCode, String response ) throws Exception

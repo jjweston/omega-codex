@@ -42,7 +42,7 @@ public class ResponseApiService
     private final EmbeddingService      embeddingService;
     private final QdrantService         qdrantService;
     private final OpenAiApiCaller       openAiApiCaller;
-    private final OmegaCodexUtil        omegaCodexUtil;
+    private final OmegaCodexLogger      omegaCodexLogger;
     private final ArrayNode             tools;
     private final ArrayNode             messages;
 
@@ -55,12 +55,13 @@ public class ResponseApiService
         boolean logFunctionCalls = true;
 
         this( iterationLimit, logApiSummary, logApiDetails, logFunctionCalls,
-              embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexUtil() );
+              embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexLogger() );
     }
 
     ResponseApiService( int iterationLimit, boolean logApiSummary, boolean logApiDetails, boolean logFunctionCalls,
                         EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
-                        QdrantService qdrantService, OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
+                        QdrantService qdrantService, OpenAiApiCaller openAiApiCaller,
+                        OmegaCodexLogger omegaCodexLogger )
     {
         if ( embeddingCacheService == null )
             throw new IllegalArgumentException( "Embedding cache service must not be null." );
@@ -84,7 +85,7 @@ public class ResponseApiService
         this.embeddingService      = embeddingService;
         this.qdrantService         = qdrantService;
         this.openAiApiCaller       = openAiApiCaller;
-        this.omegaCodexUtil        = omegaCodexUtil;
+        this.omegaCodexLogger      = omegaCodexLogger;
 
         this.tools = this.objectMapper.createArrayNode()
                 .add( this.objectMapper.createObjectNode()
@@ -175,7 +176,7 @@ public class ResponseApiService
                 int inputTokens  = usageNode.path( "input_tokens"  ).intValue();
                 int outputTokens = usageNode.path( "output_tokens" ).intValue();
                 int totalTokens  = usageNode.path( "total_tokens"  ).intValue();
-                this.omegaCodexUtil.println( String.format(
+                this.omegaCodexLogger.println( String.format(
                         "%s, Iteration: %,d, Input Tokens: %,d, Output Tokens: %,d, Total Tokens: %,d",
                         this.taskName, iterationCount, inputTokens, outputTokens, totalTokens ));
             }
@@ -283,7 +284,7 @@ public class ResponseApiService
 
         if ( this.logFunctionCalls )
         {
-            this.omegaCodexUtil.println( String.format( "%s, Search Readme: %s", this.taskName, query ));
+            this.omegaCodexLogger.println( String.format( "%s, Search Readme: %s", this.taskName, query ));
         }
 
         Embedding queryEmbedding = this.embeddingService.getEmbedding( query );
@@ -302,7 +303,8 @@ public class ResponseApiService
 
             if ( this.logFunctionCalls )
             {
-                this.omegaCodexUtil.println( String.format( "Chunk: %," + maxIdLength + "d, Score: %.10f", id, score ));
+                this.omegaCodexLogger.println(
+                        String.format( "Chunk: %," + maxIdLength + "d, Score: %.10f", id, score ));
             }
 
             resultList.add( this.objectMapper.createObjectNode()

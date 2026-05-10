@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,22 +18,12 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
-class OmegaCodexUtil
+class OmegaCodexLogger
 {
-    OmegaCodexUtil() {}
+    OmegaCodexLogger() {}
 
-    long nanoTime()
+    void println( String message )
     {
-        return System.nanoTime();
-    }
-
-    void interruptThread()
-    {
-        Thread.currentThread().interrupt();
-    }
-
-    void sleepThread( long millis ) throws InterruptedException
-    {
-        Thread.sleep( millis );
+        System.out.println( message );
     }
 }

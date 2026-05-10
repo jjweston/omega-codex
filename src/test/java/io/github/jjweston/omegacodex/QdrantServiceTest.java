@@ -26,6 +26,7 @@ import io.qdrant.client.grpc.Common;
 import io.qdrant.client.grpc.Points;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,8 +40,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
@@ -50,6 +53,7 @@ public class QdrantServiceTest
     private final int    testCollectionSize = 5;
 
     @Mock private OmegaCodexUtil                                              mockOmegaCodexUtil;
+    @Mock private OmegaCodexLogger                                            mockOmegaCodexLogger;
     @Mock private QdrantClientFactory                                         mockQdrantClientFactory;
     @Mock private QdrantClient                                                mockQdrantClient;
     @Mock private ListenableFuture< Boolean >                                 mockBooleanListenableFuture;
@@ -140,10 +144,17 @@ public class QdrantServiceTest
 
         try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, true ))
         {
+            clearInvocations( this.mockOmegaCodexLogger );
             qdrantService.upsert( testEmbedding );
         }
 
-        verify( this.mockOmegaCodexUtil ).println( "Qdrant - Upsert Point, Starting, Point ID: 1,024" );
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
+
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Qdrant - Upsert Point, Starting, Point ID: 1,024" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Qdrant - Upsert Point, Complete, Duration: 0 ms" );
+
+        inOrder.verifyNoMoreInteractions();
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
     }
 
     @Test
@@ -243,7 +254,7 @@ public class QdrantServiceTest
 
     private QdrantService createQdrantService( int collectionSize, boolean logSummary )
     {
-        TaskRunner taskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil );
+        TaskRunner taskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil, this.mockOmegaCodexLogger );
         return new QdrantService(
                 this.testCollectionName, collectionSize, logSummary, taskRunner, this.mockQdrantClientFactory );
     }

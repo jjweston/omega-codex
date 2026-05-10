@@ -50,7 +50,7 @@ public class ResponseApiServiceTest
     @Mock private EmbeddingCacheService mockEmbeddingCacheService;
     @Mock private EmbeddingService      mockEmbeddingService;
     @Mock private QdrantService         mockQdrantService;
-    @Mock private OmegaCodexUtil        mockOmegaCodexUtil;
+    @Mock private OmegaCodexLogger      mockOmegaCodexLogger;
 
     @Captor private ArgumentCaptor< ObjectNode > requestNodeCaptor;
 
@@ -62,7 +62,7 @@ public class ResponseApiServiceTest
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.testIterationLimit, false, false, false,
                         null, this.mockEmbeddingService, this.mockQdrantService,
-                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexLogger ));
 
         assertEquals( "Embedding cache service must not be null.", exception.getMessage() );
     }
@@ -75,7 +75,7 @@ public class ResponseApiServiceTest
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.testIterationLimit, false, false, false,
                         this.mockEmbeddingCacheService, null, this.mockQdrantService,
-                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexLogger ));
 
         assertEquals( "Embedding service must not be null.", exception.getMessage() );
     }
@@ -88,7 +88,7 @@ public class ResponseApiServiceTest
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.testIterationLimit, false, false, false,
                         this.mockEmbeddingCacheService, this.mockEmbeddingService, null,
-                        this.mockOpenAiApiCaller, this.mockOmegaCodexUtil ));
+                        this.mockOpenAiApiCaller, this.mockOmegaCodexLogger ));
 
         assertEquals( "Qdrant service must not be null.", exception.getMessage() );
     }
@@ -101,7 +101,7 @@ public class ResponseApiServiceTest
                 IllegalArgumentException.class, () -> new ResponseApiService(
                         this.testIterationLimit, false, false, false,
                         this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                        null, this.mockOmegaCodexUtil ));
+                        null, this.mockOmegaCodexLogger ));
 
         assertEquals( "OpenAI API caller must not be null.", exception.getMessage() );
     }
@@ -112,7 +112,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> responseApiService.getResponse( null ));
@@ -129,7 +129,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 iterationLimit, true, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String userQuery = "What is a problem with an infinite solution?";
         String functionQuery = "What is infinity plus one?";
@@ -176,17 +176,17 @@ public class ResponseApiServiceTest
 
         assertEquals( "Failed to get response within 1,024 iterations.", exception.getMessage() );
 
-        InOrder inOrder = inOrder( this.mockOmegaCodexUtil );
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
 
         for  ( int i = 0; i < iterationLimit; i++ )
         {
-            inOrder.verify( this.mockOmegaCodexUtil ).println( String.format(
+            inOrder.verify( this.mockOmegaCodexLogger ).println( String.format(
                     "Response API Call, Iteration: %,d, " +
                     "Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000", i + 1 ));
         }
 
         inOrder.verifyNoMoreInteractions();
-        verifyNoMoreInteractions( this.mockOmegaCodexUtil );
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
     }
 
     @Test
@@ -195,7 +195,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, true, false, true,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String expectedUserQuery         = "What is your quest?";
         String expectedUserResponse      = "To seek the Holy Grail!";
@@ -279,20 +279,20 @@ public class ResponseApiServiceTest
 
         assertEquals( expectedUserResponse, actualUserResponse );
 
-        InOrder inOrder = inOrder( this.mockOmegaCodexUtil );
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
 
-        inOrder.verify( this.mockOmegaCodexUtil ).println(
+        inOrder.verify( this.mockOmegaCodexLogger ).println(
                 "Response API Call, Iteration: 1, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
 
-        inOrder.verify( this.mockOmegaCodexUtil ).println( "Response API Call, Search Readme: What is my quest?" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( "Chunk:     7, Score: 0.5000000000" );
-        inOrder.verify( this.mockOmegaCodexUtil ).println( "Chunk: 1,024, Score: 0.2500000000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Search Readme: What is my quest?" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk:     7, Score: 0.5000000000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk: 1,024, Score: 0.2500000000" );
 
-        inOrder.verify( this.mockOmegaCodexUtil ).println(
+        inOrder.verify( this.mockOmegaCodexLogger ).println(
                 "Response API Call, Iteration: 2, Input Tokens: 2,500, Output Tokens: 1,500, Total Tokens: 4,000" );
 
         inOrder.verifyNoMoreInteractions();
-        verifyNoMoreInteractions( this.mockOmegaCodexUtil );
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
 
         List< ObjectNode > requestNodeList = this.requestNodeCaptor.getAllValues();
         assertEquals( 2, requestNodeList.size() );
@@ -320,7 +320,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 
@@ -363,7 +363,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
         String testQuery = "Test Query";
@@ -432,7 +432,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 
@@ -485,7 +485,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 
@@ -548,7 +548,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 
@@ -599,7 +599,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 
@@ -648,7 +648,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 
@@ -697,7 +697,7 @@ public class ResponseApiServiceTest
         ResponseApiService responseApiService = new ResponseApiService(
                 this.testIterationLimit, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
-                this.mockOpenAiApiCaller, this.mockOmegaCodexUtil );
+                this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String queryString = "What is your quest?";
 

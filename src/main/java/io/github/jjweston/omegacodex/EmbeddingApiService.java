@@ -27,26 +27,26 @@ import java.util.regex.Pattern;
 
 class EmbeddingApiService
 {
-    private final String          taskName;
-    private final String          apiEndpoint;
-    private final String          model;
-    private final int             inputLimit;
-    private final boolean         logApiSummary;
-    private final boolean         logApiDetails;
-    private final List< Pattern > embeddedJsonPatterns;
-    private final OpenAiApiCaller openAiApiCaller;
-    private final OmegaCodexUtil  omegaCodexUtil;
+    private final String           taskName;
+    private final String           apiEndpoint;
+    private final String           model;
+    private final int              inputLimit;
+    private final boolean          logApiSummary;
+    private final boolean          logApiDetails;
+    private final List< Pattern >  embeddedJsonPatterns;
+    private final OpenAiApiCaller  openAiApiCaller;
+    private final OmegaCodexLogger omegaCodexLogger;
 
     EmbeddingApiService( OpenAiApiCaller openAiApiCaller )
     {
         boolean logApiSummary = false;
         boolean logApiDetails = false;
 
-        this( logApiSummary, logApiDetails, openAiApiCaller, new OmegaCodexUtil() );
+        this( logApiSummary, logApiDetails, openAiApiCaller, new OmegaCodexLogger() );
     }
 
     EmbeddingApiService( boolean logApiSummary, boolean logApiDetails,
-                         OpenAiApiCaller openAiApiCaller, OmegaCodexUtil omegaCodexUtil )
+                         OpenAiApiCaller openAiApiCaller, OmegaCodexLogger omegaCodexLogger )
     {
         if ( openAiApiCaller == null ) throw new IllegalArgumentException( "OpenAI API caller must not be null." );
 
@@ -58,7 +58,7 @@ class EmbeddingApiService
         this.logApiDetails        = logApiDetails;
         this.embeddedJsonPatterns = List.of();
         this.openAiApiCaller      = openAiApiCaller;
-        this.omegaCodexUtil       = omegaCodexUtil;
+        this.omegaCodexLogger     = omegaCodexLogger;
     }
 
     ImmutableDoubleArray getEmbeddingVector( String input )
@@ -87,7 +87,7 @@ class EmbeddingApiService
         if ( this.logApiSummary )
         {
             int totalTokens = responseNode.path( "usage" ).path( "total_tokens" ).intValue();
-            this.omegaCodexUtil.println( String.format( "%s, Tokens: %,d", this.taskName, totalTokens ));
+            this.omegaCodexLogger.println( String.format( "%s, Tokens: %,d", this.taskName, totalTokens ));
         }
 
         JsonNode embeddingNode = responseNode.path( "data" ).get( 0 ).path( "embedding" );

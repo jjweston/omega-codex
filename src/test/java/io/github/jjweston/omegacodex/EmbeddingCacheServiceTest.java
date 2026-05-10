@@ -42,7 +42,7 @@ class EmbeddingCacheServiceTest
     private final Embedding testEmbedding =
             new Embedding( 42, new ImmutableDoubleArray( new double[] { -0.75, -0.5, 0.5, 0.75 } ));
 
-    @Mock private OmegaCodexUtil    mockOmegaCodexUtil;
+    @Mock private OmegaCodexLogger  mockOmegaCodexLogger;
     @Mock private Connection        mockConnection;
     @Mock private PreparedStatement mockPreparedStatement;
     @Mock private ResultSet         mockResultSet;
@@ -52,7 +52,7 @@ class EmbeddingCacheServiceTest
     {
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> new EmbeddingCacheService( false, null, this.mockOmegaCodexUtil ));
+                () -> new EmbeddingCacheService( false, null, this.mockOmegaCodexLogger ));
 
         assertEquals( "Connection must not be null.", exception.getMessage() );
     }
@@ -177,8 +177,8 @@ class EmbeddingCacheServiceTest
         when( this.mockResultSet.getLong( 1 )).thenReturn( 1_042L );
         assertEquals( 1_042, embeddingCacheService.cacheEmbedding( "Test", this.testEmbedding.vector() ));
 
-        verify( this.mockOmegaCodexUtil ).println( "Cache New Embedding, ID: 1,042" );
-        verifyNoMoreInteractions( this.mockOmegaCodexUtil );
+        verify( this.mockOmegaCodexLogger ).println( "Cache New Embedding, ID: 1,042" );
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
     }
 
     @Test
@@ -212,6 +212,6 @@ class EmbeddingCacheServiceTest
     private EmbeddingCacheService getEmbeddingCacheService( boolean logSummary ) throws Exception
     {
         when( this.mockConnection.prepareStatement( any() )).thenReturn( this.mockPreparedStatement );
-        return new EmbeddingCacheService( logSummary, this.mockConnection, this.mockOmegaCodexUtil);
+        return new EmbeddingCacheService( logSummary, this.mockConnection, this.mockOmegaCodexLogger );
     }
 }
