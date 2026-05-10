@@ -24,6 +24,8 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
+import tools.jackson.dataformat.yaml.YAMLMapper;
+import tools.jackson.dataformat.yaml.YAMLWriteFeature;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -40,6 +42,7 @@ public class OpenAiApiCaller
     private final OmegaCodexUtil     omegaCodexUtil;
     private final TaskRunner         taskRunner;
     private final ObjectMapper       objectMapper;
+    private final ObjectMapper       yamlObjectMapper;
 
     OpenAiApiCaller()
     {
@@ -61,6 +64,11 @@ public class OpenAiApiCaller
         this.omegaCodexUtil     = omegaCodexUtil;
         this.taskRunner         = taskRunner;
         this.objectMapper       = new ObjectMapper();
+        this.yamlObjectMapper   = YAMLMapper.builder()
+                .disable( YAMLWriteFeature.WRITE_DOC_START_MARKER )
+                .enable( YAMLWriteFeature.LITERAL_BLOCK_STYLE )
+                .enable( YAMLWriteFeature.SPLIT_LINES )
+                .build();
     }
 
     JsonNode getResponse( String taskName, String apiEndpoint, ObjectNode requestNode, String startMessage,
@@ -74,8 +82,8 @@ public class OpenAiApiCaller
 
         if ( logApiDetails )
         {
-            String debugRequestString = this.expandEmbeddedJson(
-                    JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns ).toPrettyString();
+            String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString(
+                    this.expandEmbeddedJson( JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns ));
 
             omegaCodexUtil.println( "----------------------------------------------------------------------" );
             omegaCodexUtil.println( "Request:" );
@@ -107,8 +115,8 @@ public class OpenAiApiCaller
 
         if ( logApiDetails )
         {
-            String debugResponseString = this.expandEmbeddedJson(
-                    JsonPointer.compile( "/response" ), responseNode, embeddedJsonPatterns ).toPrettyString();
+            String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString(
+                    this.expandEmbeddedJson( JsonPointer.compile( "/response" ), responseNode, embeddedJsonPatterns ));
 
             omegaCodexUtil.println( "----------------------------------------------------------------------" );
             omegaCodexUtil.println( "Status Code: " + statusCode );
