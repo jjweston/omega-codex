@@ -172,13 +172,6 @@ class MarkdownSplitterTest
                 This is not valid JSON.
                 """;
 
-        List< String > expectedChunks = List.of(
-                """
-                # Test Markdown
-
-                This is a test Markdown file.
-                """ );
-
         this.mockProcess( 0, null, null, stdout, null );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
