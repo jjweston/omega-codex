@@ -27,7 +27,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ResponseApiService
+class ResponseApiService
 {
     private final String                taskName;
     private final String                apiEndpoint;

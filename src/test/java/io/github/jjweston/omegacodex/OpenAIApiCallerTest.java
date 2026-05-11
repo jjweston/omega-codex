@@ -42,7 +42,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
-public class OpenAIApiCallerTest
+class OpenAIApiCallerTest
 {
     private final String testTaskName      = "OpenAIApiCallerTest";
     private final String testApiEndpoint   = "https://example.org/v1/test";

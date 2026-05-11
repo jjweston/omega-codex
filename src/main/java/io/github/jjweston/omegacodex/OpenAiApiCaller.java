@@ -33,7 +33,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class OpenAiApiCaller
+class OpenAiApiCaller
 {
     private final String             apiKeyVarName;
     private final Environment        environment;

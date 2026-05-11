@@ -26,7 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MarkdownSplitterIT
+class MarkdownSplitterIT
 {
     @Test
     void testSplit( @TempDir Path tempDir ) throws Exception
