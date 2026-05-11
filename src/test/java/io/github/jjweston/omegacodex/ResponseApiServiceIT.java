@@ -37,7 +37,7 @@ class ResponseApiServiceIT
     @AfterEach
     void tearDown()
     {
-        TestUtil.deleteCollection( this.qdrantClientFactory, this.collectionName, this.taskRunner );
+        OmegaCodexTestUtil.deleteCollection( this.qdrantClientFactory, this.collectionName, this.taskRunner );
     }
 
     @Test
@@ -91,7 +91,7 @@ class ResponseApiServiceIT
                     new ResponseApiService( embeddingCacheService, embeddingService, qdrantService, openAiApiCaller );
 
             MarkdownLoader markdownLoader = new MarkdownLoader( embeddingService, qdrantService );
-            markdownLoader.load( TestUtil.copyResource( this.getClass().getSimpleName() + ".md", tempDir ));
+            markdownLoader.load( OmegaCodexTestUtil.copyResource( this.getClass().getSimpleName() + ".md", tempDir ));
 
             assertEquals( response1, responseApiService.getResponse( query1 ));
             assertEquals( response2, responseApiService.getResponse( query2 ));
