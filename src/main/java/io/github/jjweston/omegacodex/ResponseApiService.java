@@ -93,7 +93,10 @@ class ResponseApiService
                         .put( "name", "search_readme" )
                         .put( "description",
                                 "Search the project's readme file for information relevant to the user's request. " +
-                                "Use this when your answer may depend on content in the project's readme file." )
+                                "Use this when your answer may depend on content in the project's readme file. " +
+                                "Search results include a semantic similarity score. " +
+                                "Higher scores generally indicate more relevant matches, " +
+                                "but the score is only a rough guide." )
                         .set( "parameters", this.objectMapper.createObjectNode()
                                 .put( "type", "object" )
                                 .set( "properties", this.objectMapper.createObjectNode()
@@ -309,6 +312,7 @@ class ResponseApiService
 
             resultList.add( this.objectMapper.createObjectNode()
                     .put( "id", id )
+                    .put( "score", score )
                     .put( "text", text ));
         }
 
