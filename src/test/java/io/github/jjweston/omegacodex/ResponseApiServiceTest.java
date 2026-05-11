@@ -200,18 +200,20 @@ class ResponseApiServiceTest
         String expectedUserQuery         = "What is your quest?";
         String expectedUserResponse      = "To seek the Holy Grail!";
         String expectedFunctionQuery     = "What is my quest?";
-        String expectedFunctionResponse1 = "Quest Objective: Holy Grail";
-        String expectedFunctionResponse2 = "Favorite Color: Blue";
         String expectedCallId            = "test_call_id";
+        String expectedSearchResultText1 = "Quest Objective: Holy Grail";
+        String expectedSearchResultText2 = "Favorite Color: Blue";
         long   expectedSearchResultId1   = 7;
         long   expectedSearchResultId2   = 1_024;
+        float  expectedSearchResulScore1 = 0.50f;
+        float  expectedSearchResulScore2 = 0.25f;
 
         ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
         Embedding queryEmbedding = new Embedding( 42, queryVector );
 
         List< SearchResult > searchResults = List.of(
-                new SearchResult( expectedSearchResultId1, 0.50f ),
-                new SearchResult( expectedSearchResultId2, 0.25f ));
+                new SearchResult( expectedSearchResultId1, expectedSearchResulScore1 ),
+                new SearchResult( expectedSearchResultId2, expectedSearchResulScore2 ));
 
         String responseString1 = String.format(
                 """
@@ -271,9 +273,9 @@ class ResponseApiServiceTest
         when( this.mockEmbeddingService.getEmbedding( expectedFunctionQuery )).thenReturn( queryEmbedding );
         when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
         when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId1 ))
-                .thenReturn( expectedFunctionResponse1 );
+                .thenReturn( expectedSearchResultText1 );
         when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId2 ))
-                .thenReturn( expectedFunctionResponse2 );
+                .thenReturn( expectedSearchResultText2 );
 
         String actualUserResponse = responseApiService.getResponse( expectedUserQuery );
 
@@ -310,8 +312,11 @@ class ResponseApiServiceTest
         assertEquals( expectedSearchResultId1, functionResponseNode.path( 0 ).path( "id" ).asLong() );
         assertEquals( expectedSearchResultId2, functionResponseNode.path( 1 ).path( "id" ).asLong() );
 
-        assertEquals( expectedFunctionResponse1, functionResponseNode.path( 0 ).path( "text" ).asString() );
-        assertEquals( expectedFunctionResponse2, functionResponseNode.path( 1 ).path( "text" ).asString() );
+        assertEquals( expectedSearchResulScore1, functionResponseNode.path( 0 ).path( "score" ).asFloat() );
+        assertEquals( expectedSearchResulScore2, functionResponseNode.path( 1 ).path( "score" ).asFloat() );
+
+        assertEquals( expectedSearchResultText1, functionResponseNode.path( 0 ).path( "text" ).asString() );
+        assertEquals( expectedSearchResultText2, functionResponseNode.path( 1 ).path( "text" ).asString() );
     }
 
     @Test
