@@ -18,8 +18,14 @@ limitations under the License.
 
 package io.github.jjweston.omegacodex;
 
+import io.qdrant.client.QdrantClient;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class OmegaCodexTestUtil
 {
@@ -31,5 +37,28 @@ class OmegaCodexTestUtil
 
         try { return new String( inputStream.readAllBytes() ); }
         catch ( IOException e ) { throw new OmegaCodexException( "Failed to read from input stream.", e ); }
+    }
+
+    static Path copyResource(String resourceName, Path destination ) throws IOException
+    {
+        Path resourcePath = destination.resolve( resourceName );
+
+        try ( InputStream resourceStream = OmegaCodexTestUtil.class.getResourceAsStream( resourceName ))
+        {
+            assertNotNull( resourceStream, "Missing Resource: " + resourceName );
+            Files.copy( resourceStream, resourcePath );
+        }
+
+        return resourcePath;
+    }
+
+    static void deleteCollection(
+            QdrantClientFactory qdrantClientFactory, String collectionName, TaskRunner taskRunner )
+    {
+        try( QdrantClient qdrantClient = qdrantClientFactory.create() )
+        {
+            taskRunner.run( "Test Util - Delete Collection", false,
+                    () -> qdrantClient.deleteCollectionAsync( collectionName ).get() );
+        }
     }
 }

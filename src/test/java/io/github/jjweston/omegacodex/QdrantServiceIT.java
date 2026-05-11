@@ -37,7 +37,7 @@ class QdrantServiceIT
     @AfterEach
     void tearDown()
     {
-        TestUtil.deleteCollection( this.qdrantClientFactory, this.collectionName, this.taskRunner );
+        OmegaCodexTestUtil.deleteCollection( this.qdrantClientFactory, this.collectionName, this.taskRunner );
     }
 
     @Test
