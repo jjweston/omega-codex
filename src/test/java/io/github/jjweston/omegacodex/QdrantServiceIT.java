@@ -28,7 +28,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class QdrantServiceIT
+class QdrantServiceIT
 {
     private final String              collectionName      = "omegacodex_chunks_test";
     private final QdrantClientFactory qdrantClientFactory = new QdrantClientFactory();

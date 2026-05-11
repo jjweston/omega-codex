@@ -28,7 +28,7 @@ import java.sql.Connection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ResponseApiServiceIT
+class ResponseApiServiceIT
 {
     private final String              collectionName      = "omegacodex_chunks_test";
     private final QdrantClientFactory qdrantClientFactory = new QdrantClientFactory();

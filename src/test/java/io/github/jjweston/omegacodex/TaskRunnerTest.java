@@ -34,7 +34,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
-public class TaskRunnerTest
+class TaskRunnerTest
 {
     @Mock private OmegaCodexUtil   mockOmegaCodexUtil;
     @Mock private OmegaCodexLogger mockOmegaCodexLogger;

@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ package io.github.jjweston.omegacodex;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class OmegaCodexTestUtil
+class OmegaCodexTestUtil
 {
     private OmegaCodexTestUtil() {}
 

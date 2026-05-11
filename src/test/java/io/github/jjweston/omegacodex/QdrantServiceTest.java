@@ -47,7 +47,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
-public class QdrantServiceTest
+class QdrantServiceTest
 {
     private final String testCollectionName = "test";
     private final int    testCollectionSize = 5;
