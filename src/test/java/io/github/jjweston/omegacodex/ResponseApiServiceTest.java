@@ -20,8 +20,6 @@ package io.github.jjweston.omegacodex;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -31,10 +29,14 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.inOrder;
@@ -51,8 +53,6 @@ class ResponseApiServiceTest
     @Mock private EmbeddingService      mockEmbeddingService;
     @Mock private QdrantService         mockQdrantService;
     @Mock private OmegaCodexLogger      mockOmegaCodexLogger;
-
-    @Captor private ArgumentCaptor< ObjectNode > requestNodeCaptor;
 
     @Test
     void testConstructor_nullEmbeddingCacheService()
@@ -197,25 +197,41 @@ class ResponseApiServiceTest
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
-        String expectedUserQuery         = "What is your quest?";
-        String expectedUserResponse      = "To seek the Holy Grail!";
-        String expectedFunctionQuery     = "What is my quest?";
-        String expectedCallId            = "test_call_id";
-        String expectedSearchResultText1 = "Quest Objective: Holy Grail";
-        String expectedSearchResultText2 = "Favorite Color: Blue";
-        long   expectedSearchResultId1   = 7;
-        long   expectedSearchResultId2   = 1_024;
-        float  expectedSearchResulScore1 = 0.50f;
-        float  expectedSearchResulScore2 = 0.25f;
+        String expectedUserQuery1         = "What is your quest?";
+        String expectedUserResponse1      = "To seek the Holy Grail!";
+        String expectedFunctionQuery1     = "What is my quest?";
+        String expectedCallId1            = "test_call_id_1";
+        String expectedSearchResultText1a = "My quest is to seek the Holy Grail!";
+        String expectedSearchResultText1b = "I am looking for brave knights to join my Knights of the Round Table!";
+        long   expectedSearchResultId1a   = 7;
+        long   expectedSearchResultId1b   = 1_024;
+        float  expectedSearchResulScore1a = 0.500f;
+        float  expectedSearchResulScore1b = 0.250f;
 
-        ImmutableDoubleArray queryVector = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
-        Embedding queryEmbedding = new Embedding( 42, queryVector );
+        String expectedUserQuery2         = "What is your favorite color?";
+        String expectedUserResponse2      = "Blue. No, yel-- aah!";
+        String expectedFunctionQuery2     = "What is my favorite color?";
+        String expectedCallId2            = "test_call_id_2";
+        String expectedSearchResultText2a = "My favorite color is blue. Or maybe it's yellow...";
+        String expectedSearchResultText2b = "I am looking for brave knights to join my Knights of the Round Table!";
+        long   expectedSearchResultId2a   = 13;
+        long   expectedSearchResultId2b   = 1_024;
+        float  expectedSearchResulScore2a = 0.625f;
+        float  expectedSearchResulScore2b = 0.125f;
 
-        List< SearchResult > searchResults = List.of(
-                new SearchResult( expectedSearchResultId1, expectedSearchResulScore1 ),
-                new SearchResult( expectedSearchResultId2, expectedSearchResulScore2 ));
+        ImmutableDoubleArray queryVector1 = new ImmutableDoubleArray( new double[] { 0.5, 0.4, 0.3, 0.2, 0.1 } );
+        Embedding queryEmbedding1 = new Embedding( 42, queryVector1 );
+        List< SearchResult > searchResults1 = List.of(
+                new SearchResult( expectedSearchResultId1a, expectedSearchResulScore1a ),
+                new SearchResult( expectedSearchResultId1b, expectedSearchResulScore1b ));
 
-        String responseString1 = String.format(
+        ImmutableDoubleArray queryVector2 = new ImmutableDoubleArray( new double[] { 0.6, 0.5, 0.4, 0.3, 0.2 } );
+        Embedding queryEmbedding2 = new Embedding( 67, queryVector2 );
+        List< SearchResult > searchResults2 = List.of(
+                new SearchResult( expectedSearchResultId2a, expectedSearchResulScore2a ),
+                new SearchResult( expectedSearchResultId2b, expectedSearchResulScore2b ));
+
+        String responseStringFunctionCall =
                 """
                 {
                   "output":
@@ -234,9 +250,9 @@ class ResponseApiServiceTest
                     "total_tokens": 3000
                   }
                 }
-                """, expectedFunctionQuery, expectedCallId );
+                """;
 
-        String responseString2 = String.format(
+        String responseStringAnswer =
                 """
                 {
                   "output":
@@ -259,64 +275,114 @@ class ResponseApiServiceTest
                     "total_tokens": 4000
                   }
                 }
-                """, expectedUserResponse );
+                """;
 
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode responseNode1 = objectMapper.readTree( responseString1 );
-        JsonNode responseNode2 = objectMapper.readTree( responseString2 );
+        JsonNode responseNode1 = objectMapper.readTree(
+                String.format( responseStringFunctionCall, expectedFunctionQuery1, expectedCallId1 ));
+        JsonNode responseNode2 = objectMapper.readTree( String.format( responseStringAnswer, expectedUserResponse1 ));
+        JsonNode responseNode3 = objectMapper.readTree(
+                String.format( responseStringFunctionCall, expectedFunctionQuery2, expectedCallId2 ));
+        JsonNode responseNode4 = objectMapper.readTree( String.format( responseStringAnswer, expectedUserResponse2 ));
+
+        List< JsonNode > responses = List.of( responseNode1, responseNode2, responseNode3, responseNode4 );
+        AtomicInteger responseIndex = new AtomicInteger( 0 );
+        List< JsonNode > inputNodeList = new LinkedList<>();
 
         when( this.mockOpenAiApiCaller
                 .getResponse(
-                        any(), any(), this.requestNodeCaptor.capture(), any(), anyBoolean(), anyBoolean(), any() ))
-                .thenReturn( responseNode1, responseNode2 );
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+                .then( invocation ->
+                {
+                    inputNodeList.add( invocation.getArgument( 2, ObjectNode.class ).path( "input" ).deepCopy() );
+                    return responses.get( responseIndex.getAndIncrement() );
+                } );
 
-        when( this.mockEmbeddingService.getEmbedding( expectedFunctionQuery )).thenReturn( queryEmbedding );
-        when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
-        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId1 ))
-                .thenReturn( expectedSearchResultText1 );
-        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId2 ))
-                .thenReturn( expectedSearchResultText2 );
+        when( this.mockEmbeddingService.getEmbedding( expectedFunctionQuery1 )).thenReturn( queryEmbedding1 );
+        when( this.mockQdrantService.search( queryVector1 )).thenReturn( searchResults1 );
+        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId1a ))
+                .thenReturn( expectedSearchResultText1a );
+        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId1b ))
+                .thenReturn( expectedSearchResultText1b );
 
-        String actualUserResponse = responseApiService.getResponse( expectedUserQuery );
+        when( this.mockEmbeddingService.getEmbedding( expectedFunctionQuery2 )).thenReturn( queryEmbedding2 );
+        when( this.mockQdrantService.search( queryVector2 )).thenReturn( searchResults2 );
+        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId2a ))
+                .thenReturn( expectedSearchResultText2a );
+        when( this.mockEmbeddingCacheService.getInput( expectedSearchResultId2b ))
+                .thenReturn( expectedSearchResultText2b );
 
-        assertEquals( expectedUserResponse, actualUserResponse );
+        assertEquals( expectedUserResponse1, responseApiService.getResponse( expectedUserQuery1 ));
+        assertEquals( expectedUserResponse2, responseApiService.getResponse( expectedUserQuery2 ));
 
         InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
 
         inOrder.verify( this.mockOmegaCodexLogger ).println(
                 "Response API Call, Iteration: 1, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
-
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Search Readme: What is my quest?" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk:     7, Score: 0.5000000000" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk: 1,024, Score: 0.2500000000" );
-
+        inOrder.verify( this.mockOmegaCodexLogger ).println(
+                "Response API Call, Iteration: 2, Input Tokens: 2,500, Output Tokens: 1,500, Total Tokens: 4,000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println(
+                "Response API Call, Iteration: 1, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println(
+                "Response API Call, Search Readme: What is my favorite color?" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk:    13, Score: 0.6250000000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk: 1,024, Score: 0.1250000000, Duplicate" );
         inOrder.verify( this.mockOmegaCodexLogger ).println(
                 "Response API Call, Iteration: 2, Input Tokens: 2,500, Output Tokens: 1,500, Total Tokens: 4,000" );
 
         inOrder.verifyNoMoreInteractions();
         verifyNoMoreInteractions( this.mockOmegaCodexLogger );
 
-        List< ObjectNode > requestNodeList = this.requestNodeCaptor.getAllValues();
-        assertEquals( 2, requestNodeList.size() );
+        assertEquals( 4, inputNodeList.size() );
+        assertEquals( 2, inputNodeList.get( 0 ).size() );
+        assertEquals( 4, inputNodeList.get( 1 ).size() );
+        assertEquals( 6, inputNodeList.get( 2 ).size() );
+        assertEquals( 8, inputNodeList.get( 3 ).size() );
 
-        String actualUserQuery = requestNodeList.getFirst().path( "input" ).path( 1 ).path( "content" ).asString();
-        assertEquals( expectedUserQuery, actualUserQuery );
+        assertEquals( expectedUserQuery1, inputNodeList.get( 0 ).path( 1 ).path( "content" ).asString() );
 
-        String actualCallId = requestNodeList.getLast().path( "input" ).path( 3 ).path( "call_id" ).asString();
-        assertEquals( expectedCallId, actualCallId );
+        assertEquals( expectedCallId1, inputNodeList.get( 1 ).path( 2 ).path( "call_id" ).asString() );
+        assertEquals( expectedCallId1, inputNodeList.get( 1 ).path( 3 ).path( "call_id" ).asString() );
 
-        String functionResponseJson = requestNodeList.getLast().path( "input" ).path( 3 ).path( "output" ).asString();
-        JsonNode functionResponseNode = objectMapper.readTree( functionResponseJson );
-        assertEquals( 2, functionResponseNode.size() );
+        String functionResponseJson1 = inputNodeList.get( 1 ).path( 3 ).path( "output" ).asString();
+        JsonNode functionResponseNode1 = objectMapper.readTree( functionResponseJson1 );
+        assertEquals( 2, functionResponseNode1.size() );
 
-        assertEquals( expectedSearchResultId1, functionResponseNode.path( 0 ).path( "id" ).asLong() );
-        assertEquals( expectedSearchResultId2, functionResponseNode.path( 1 ).path( "id" ).asLong() );
+        assertEquals( expectedSearchResultId1a, functionResponseNode1.path( 0 ).path( "id" ).asLong() );
+        assertEquals( expectedSearchResultId1b, functionResponseNode1.path( 1 ).path( "id" ).asLong() );
 
-        assertEquals( expectedSearchResulScore1, functionResponseNode.path( 0 ).path( "score" ).asFloat() );
-        assertEquals( expectedSearchResulScore2, functionResponseNode.path( 1 ).path( "score" ).asFloat() );
+        assertEquals( expectedSearchResulScore1a, functionResponseNode1.path( 0 ).path( "score" ).asFloat() );
+        assertEquals( expectedSearchResulScore1b, functionResponseNode1.path( 1 ).path( "score" ).asFloat() );
 
-        assertEquals( expectedSearchResultText1, functionResponseNode.path( 0 ).path( "text" ).asString() );
-        assertEquals( expectedSearchResultText2, functionResponseNode.path( 1 ).path( "text" ).asString() );
+        assertEquals( expectedSearchResultText1a, functionResponseNode1.path( 0 ).path( "text" ).asString() );
+        assertEquals( expectedSearchResultText1b, functionResponseNode1.path( 1 ).path( "text" ).asString() );
+
+        assertFalse( functionResponseNode1.path( 0 ).path( "duplicate" ).asBoolean() );
+        assertFalse( functionResponseNode1.path( 1 ).path( "duplicate" ).asBoolean() );
+
+        assertEquals( expectedUserQuery2, inputNodeList.get( 2 ).path( 5 ).path( "content" ).asString() );
+
+        assertEquals( expectedCallId2, inputNodeList.get( 3 ).path( 6 ).path( "call_id" ).asString() );
+        assertEquals( expectedCallId2, inputNodeList.get( 3 ).path( 7 ).path( "call_id" ).asString() );
+
+        String functionResponseJson2 = inputNodeList.get( 3 ).path( 7 ).path( "output" ).asString();
+        JsonNode functionResponseNode2 = objectMapper.readTree( functionResponseJson2 );
+        assertEquals( 2, functionResponseNode2.size() );
+
+        assertEquals( expectedSearchResultId2a, functionResponseNode2.path( 0 ).path( "id" ).asLong() );
+        assertEquals( expectedSearchResultId2b, functionResponseNode2.path( 1 ).path( "id" ).asLong() );
+
+        assertEquals( expectedSearchResulScore2a, functionResponseNode2.path( 0 ).path( "score" ).asFloat() );
+        assertEquals( expectedSearchResulScore2b, functionResponseNode2.path( 1 ).path( "score" ).asFloat() );
+
+        assertEquals( expectedSearchResultText2a, functionResponseNode2.path( 0 ).path( "text" ).asString() );
+        assertEquals( "",                         functionResponseNode2.path( 1 ).path( "text" ).asString() );
+
+        assertFalse( functionResponseNode2.path( 0 ).path( "duplicate" ).asBoolean() );
+        assertTrue(  functionResponseNode2.path( 1 ).path( "duplicate" ).asBoolean() );
     }
 
     @Test

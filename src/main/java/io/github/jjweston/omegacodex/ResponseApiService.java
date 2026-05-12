@@ -24,7 +24,9 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 class ResponseApiService
@@ -45,6 +47,7 @@ class ResponseApiService
     private final OmegaCodexLogger      omegaCodexLogger;
     private final ArrayNode             tools;
     private final ArrayNode             messages;
+    private final Set< Long >           searchResultIds;
 
     ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
                         QdrantService qdrantService, OpenAiApiCaller openAiApiCaller )
@@ -149,6 +152,8 @@ class ResponseApiService
         this.messages = this.objectMapper.createArrayNode().add( this.objectMapper.createObjectNode()
                 .put( "role", "developer" )
                 .put( "content", developerMessage ));
+
+        this.searchResultIds = new HashSet<>();
     }
 
     String getResponse( String query )
@@ -314,20 +319,31 @@ class ResponseApiService
         ArrayNode resultList = objectMapper.createArrayNode();
         for ( SearchResult searchResult : searchResults )
         {
-            long   id    = searchResult.id();
-            float  score = searchResult.score();
-            String text  = this.embeddingCacheService.getInput( id );
+            long   id         = searchResult.id();
+            float  score      = searchResult.score();
+            boolean duplicate = this.searchResultIds.contains( id );
 
             if ( this.logFunctionCalls )
             {
-                this.omegaCodexLogger.println(
-                        String.format( "Chunk: %," + maxIdLength + "d, Score: %.10f", id, score ));
+                this.omegaCodexLogger.println( String.format(
+                        "Chunk: %," + maxIdLength + "d, Score: %.10f%s", id, score, duplicate ? ", Duplicate" : "" ));
             }
 
-            resultList.add( this.objectMapper.createObjectNode()
+            ObjectNode resultNode = objectMapper.createObjectNode()
                     .put( "id", id )
-                    .put( "score", score )
-                    .put( "text", text ));
+                    .put( "score", score );
+
+            if ( duplicate )
+            {
+                resultNode.put( "duplicate", true );
+            }
+            else
+            {
+                resultNode.put( "text", this.embeddingCacheService.getInput( id ));
+                this.searchResultIds.add( id );
+            }
+
+            resultList.add( resultNode );
         }
 
         return resultList.toString();
