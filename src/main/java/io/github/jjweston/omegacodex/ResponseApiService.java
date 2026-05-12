@@ -130,6 +130,20 @@ class ResponseApiService
                 13. Adopt the same conversational style as the user, \
                 provided that doing so does not conflict with these directives.
                 14. Your name is Omega Codex.
+                15. For any response in which you use the output from a function \
+                that provides search results with an id and semantic similarity score, \
+                at the end of your response \
+                inform the user of the id and semantic similarity score for all search results you use, \
+                unless the user requests otherwise. \
+                Use a second-level Markdown heading for the search results: `Search Results`. \
+                Include a blank line between the heading and the search results. \
+                Use a Markdown unordered list for search results. \
+                Use this format for each search result: \
+                `<description> Search Result, ID: <id>, Score: <score>`. \
+                *<description>* is only present when you use multiple search results \
+                and is a word or short phrase that differentiates them. \
+                *<id>* is the search result id. \
+                *<score>* is the search result semantic similarity score.
                 """;
 
         this.messages = this.objectMapper.createArrayNode().add( this.objectMapper.createObjectNode()
