@@ -94,6 +94,8 @@ class ResponseApiService
 
         this.tools = this.objectMapper.createArrayNode()
                 .add( this.objectMapper.createObjectNode()
+                        .put( "type", "web_search" ))
+                .add( this.objectMapper.createObjectNode()
                         .put( "type", "function" )
                         .put( "name", "search_readme" )
                         .put( "description",
@@ -171,7 +173,8 @@ class ResponseApiService
                 .put( "summary", "detailed" );
 
         ArrayNode includeNode = this.objectMapper.createArrayNode()
-                .add( "reasoning.encrypted_content" );
+                .add( "reasoning.encrypted_content" )
+                .add( "web_search_call.action.sources" );
 
         int iterationCount = 0;
         String response = null;
