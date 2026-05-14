@@ -74,7 +74,7 @@ class ResponseApiService
 
         this.taskName              = "Response API Call";
         this.apiEndpoint           = "https://api.openai.com/v1/responses";
-        this.model                 = "gpt-5.4";
+        this.model                 = "gpt-5.5";
         this.iterationLimit        = iterationLimit;
         this.logApiSummary         = logApiSummary;
         this.logApiDetails         = logApiDetails;
