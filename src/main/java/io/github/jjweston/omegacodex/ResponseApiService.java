@@ -49,6 +49,8 @@ class ResponseApiService
     private final ArrayNode             messages;
     private final Set< Long >           searchResultIds;
 
+    private int previousInputTokenCount = 0;
+
     ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
                         QdrantService qdrantService, OpenAiApiCaller openAiApiCaller )
     {
@@ -195,12 +197,18 @@ class ResponseApiService
             if ( this.logApiSummary )
             {
                 JsonNode usageNode = responseNode.path( "usage" );
-                int inputTokens  = usageNode.path( "input_tokens"  ).intValue();
-                int outputTokens = usageNode.path( "output_tokens" ).intValue();
-                int totalTokens  = usageNode.path( "total_tokens"  ).intValue();
+                int inputTokenCount  = usageNode.path( "input_tokens"  ).intValue();
+                int outputTokenCount = usageNode.path( "output_tokens" ).intValue();
+                int totalTokenCount  = usageNode.path( "total_tokens"  ).intValue();
+
+                int newInputTokenCount = inputTokenCount - this.previousInputTokenCount;
+                this.previousInputTokenCount = inputTokenCount;
+
                 this.omegaCodexLogger.println( String.format(
-                        "%s, Iteration: %,d, Input Tokens: %,d, Output Tokens: %,d, Total Tokens: %,d",
-                        this.taskName, iterationCount, inputTokens, outputTokens, totalTokens ));
+                        "%s, Iteration: %,d, New Input Tokens: %,d, Total Input Tokens: %,d, " +
+                                "Output Tokens: %,d, Total Tokens: %,d",
+                        this.taskName, iterationCount,
+                        newInputTokenCount, inputTokenCount, outputTokenCount, totalTokenCount ));
             }
 
             JsonNode outputNode = responseNode.path( "output" );
