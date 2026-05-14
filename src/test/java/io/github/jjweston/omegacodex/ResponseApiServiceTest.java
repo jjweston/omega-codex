@@ -178,11 +178,15 @@ class ResponseApiServiceTest
 
         InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
 
-        for  ( int i = 0; i < iterationLimit; i++ )
+        inOrder.verify( this.mockOmegaCodexLogger ).println(
+                "Response API Call, Iteration: 1, New Input Tokens: 2,000, Total Input Tokens: 2,000, " +
+                        "Output Tokens: 1,000, Total Tokens: 3,000" );
+
+        for  ( int i = 1; i < iterationLimit; i++ )
         {
             inOrder.verify( this.mockOmegaCodexLogger ).println( String.format(
-                    "Response API Call, Iteration: %,d, " +
-                    "Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000", i + 1 ));
+                    "Response API Call, Iteration: %,d, New Input Tokens: 0, Total Input Tokens: 2,000, " +
+                            "Output Tokens: 1,000, Total Tokens: 3,000", i + 1 ));
         }
 
         inOrder.verifyNoMoreInteractions();
@@ -245,9 +249,9 @@ class ResponseApiServiceTest
                   ],
                   "usage":
                   {
-                    "input_tokens": 2000,
-                    "output_tokens": 1000,
-                    "total_tokens": 3000
+                    "input_tokens": %d,
+                    "output_tokens": %d,
+                    "total_tokens": %d
                   }
                 }
                 """;
@@ -270,20 +274,26 @@ class ResponseApiServiceTest
                   ],
                   "usage":
                   {
-                    "input_tokens": 2500,
-                    "output_tokens": 1500,
-                    "total_tokens": 4000
+                    "input_tokens": %d,
+                    "output_tokens": %d,
+                    "total_tokens": %d
                   }
                 }
                 """;
 
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode1 = objectMapper.readTree(
-                String.format( responseStringFunctionCall, expectedFunctionQuery1, expectedCallId1 ));
-        JsonNode responseNode2 = objectMapper.readTree( String.format( responseStringAnswer, expectedUserResponse1 ));
+                String.format(
+                        responseStringFunctionCall, expectedFunctionQuery1, expectedCallId1, 2_000, 1_000, 3_000 ));
+        JsonNode responseNode2 = objectMapper.readTree(
+                String.format(
+                        responseStringAnswer, expectedUserResponse1, 3_500, 1_500, 5_000 ));
         JsonNode responseNode3 = objectMapper.readTree(
-                String.format( responseStringFunctionCall, expectedFunctionQuery2, expectedCallId2 ));
-        JsonNode responseNode4 = objectMapper.readTree( String.format( responseStringAnswer, expectedUserResponse2 ));
+                String.format(
+                        responseStringFunctionCall, expectedFunctionQuery2, expectedCallId2, 4_500, 2_000, 6_500 ));
+        JsonNode responseNode4 = objectMapper.readTree(
+                String.format(
+                        responseStringAnswer, expectedUserResponse2, 7_000, 2_500, 9_500 ));
 
         List< JsonNode > responses = List.of( responseNode1, responseNode2, responseNode3, responseNode4 );
         AtomicInteger responseIndex = new AtomicInteger( 0 );
@@ -317,21 +327,21 @@ class ResponseApiServiceTest
 
         InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
 
-        inOrder.verify( this.mockOmegaCodexLogger ).println(
-                "Response API Call, Iteration: 1, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Iteration: 1, " +
+                "New Input Tokens: 2,000, Total Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Search Readme: What is my quest?" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk:     7, Score: 0.5000000000" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk: 1,024, Score: 0.2500000000" );
-        inOrder.verify( this.mockOmegaCodexLogger ).println(
-                "Response API Call, Iteration: 2, Input Tokens: 2,500, Output Tokens: 1,500, Total Tokens: 4,000" );
-        inOrder.verify( this.mockOmegaCodexLogger ).println(
-                "Response API Call, Iteration: 1, Input Tokens: 2,000, Output Tokens: 1,000, Total Tokens: 3,000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Iteration: 2, " +
+                "New Input Tokens: 1,500, Total Input Tokens: 3,500, Output Tokens: 1,500, Total Tokens: 5,000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Iteration: 1, " +
+                "New Input Tokens: 1,000, Total Input Tokens: 4,500, Output Tokens: 2,000, Total Tokens: 6,500" );
         inOrder.verify( this.mockOmegaCodexLogger ).println(
                 "Response API Call, Search Readme: What is my favorite color?" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk:    13, Score: 0.6250000000" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "Chunk: 1,024, Score: 0.1250000000, Duplicate" );
-        inOrder.verify( this.mockOmegaCodexLogger ).println(
-                "Response API Call, Iteration: 2, Input Tokens: 2,500, Output Tokens: 1,500, Total Tokens: 4,000" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "Response API Call, Iteration: 2, " +
+                "New Input Tokens: 2,500, Total Input Tokens: 7,000, Output Tokens: 2,500, Total Tokens: 9,500" );
 
         inOrder.verifyNoMoreInteractions();
         verifyNoMoreInteractions( this.mockOmegaCodexLogger );
