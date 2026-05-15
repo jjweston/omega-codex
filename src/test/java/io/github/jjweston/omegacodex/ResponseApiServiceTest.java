@@ -163,8 +163,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller
-                .getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         when( this.mockEmbeddingService.getEmbedding( functionQuery )).thenReturn( queryEmbedding );
@@ -299,9 +299,8 @@ class ResponseApiServiceTest
         AtomicInteger responseIndex = new AtomicInteger( 0 );
         List< JsonNode > inputNodeList = new LinkedList<>();
 
-        when( this.mockOpenAiApiCaller
-                .getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .then( invocation ->
                 {
                     inputNodeList.add( invocation.getArgument( 2, ObjectNode.class ).path( "input" ).deepCopy() );
@@ -423,7 +422,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -488,7 +488,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         when( this.mockEmbeddingService.getEmbedding( testQuery )).thenReturn( queryEmbedding );
@@ -545,7 +546,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -608,7 +610,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -659,7 +662,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -708,7 +712,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -757,7 +762,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -806,7 +812,8 @@ class ResponseApiServiceTest
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode = objectMapper.readTree( responseString );
 
-        when( this.mockOpenAiApiCaller.getResponse( any(), any(), any(), any(), anyBoolean(), anyBoolean(), any() ))
+        when( this.mockOpenAiApiCaller.getResponse(
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
