@@ -31,6 +31,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 class OpenAiApiCaller
@@ -72,7 +73,8 @@ class OpenAiApiCaller
     }
 
     JsonNode getResponse( String taskName, String apiEndpoint, ObjectNode requestNode, String startMessage,
-                          boolean logApiSummary, boolean logApiDetails, List< Pattern > embeddedJsonPatterns )
+                          boolean logApiSummary, boolean logApiDetails,
+                          List< Pattern > embeddedJsonPatterns, Map< String, Integer > arraysToTrim )
     {
         if ( taskName == null ) throw new IllegalArgumentException( "Task name must not be null." );
         if ( apiEndpoint == null ) throw new IllegalArgumentException( "API endpoint must not be null." );
@@ -82,8 +84,8 @@ class OpenAiApiCaller
 
         if ( logApiDetails )
         {
-            String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString(
-                    this.expandEmbeddedJson( JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns ));
+            String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString( this.prepareJsonForLogging(
+                    JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns, arraysToTrim ));
 
             this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
             this.omegaCodexLogger.println( "Request:" );
@@ -115,8 +117,8 @@ class OpenAiApiCaller
 
         if ( logApiDetails )
         {
-            String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString(
-                    this.expandEmbeddedJson( JsonPointer.compile( "/response" ), responseNode, embeddedJsonPatterns ));
+            String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString( this.prepareJsonForLogging(
+                    JsonPointer.compile( "/response" ), responseNode, embeddedJsonPatterns, arraysToTrim ));
 
             this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
             this.omegaCodexLogger.println( "Status Code: " + statusCode );
@@ -136,7 +138,8 @@ class OpenAiApiCaller
         return responseNode;
     }
 
-    private JsonNode expandEmbeddedJson( JsonPointer path, JsonNode node, List< Pattern > embeddedJsonPatterns )
+    private JsonNode prepareJsonForLogging(
+            JsonPointer path, JsonNode node, List< Pattern > embeddedJsonPatterns, Map< String, Integer > arraysToTrim )
     {
         String pathString = path.toString();
         if ( embeddedJsonPatterns.stream().anyMatch( pattern -> pattern.matcher( pathString ).matches() ))
@@ -162,8 +165,8 @@ class OpenAiApiCaller
 
             for ( String name : node.propertyNames() )
             {
-                copy.set( name, this.expandEmbeddedJson(
-                        path.appendProperty( name ), node.path( name ), embeddedJsonPatterns ));
+                copy.set( name, this.prepareJsonForLogging(
+                        path.appendProperty( name ), node.path( name ), embeddedJsonPatterns, arraysToTrim ));
             }
 
             return copy;
@@ -173,9 +176,24 @@ class OpenAiApiCaller
         {
             ArrayNode copy = this.objectMapper.createArrayNode();
 
-            for ( int i = 0; i < node.size(); i++ )
+            int startIndex = 0;
+
+            if ( arraysToTrim.containsKey( pathString ))
             {
-                copy.add( this.expandEmbeddedJson( path.appendIndex( i ), node.get( i ), embeddedJsonPatterns ));
+                startIndex = arraysToTrim.get( pathString );
+                if ( startIndex > 0 )
+                {
+                    copy.add( this.objectMapper.createObjectNode()
+                            .put( "type", "debugging" )
+                            .put( "message", "Elements Trimmed" )
+                            .put( "count", startIndex ));
+                }
+            }
+
+            for ( int i = startIndex; i < node.size(); i++ )
+            {
+                copy.add( this.prepareJsonForLogging(
+                        path.appendIndex( i ), node.get( i ), embeddedJsonPatterns, arraysToTrim ));
             }
 
             return copy;

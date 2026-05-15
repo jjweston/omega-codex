@@ -26,6 +26,7 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ class ResponseApiService
     private final Set< Long >           searchResultIds;
 
     private int previousInputTokenCount = 0;
+    private int previousMessagesSize    = 0;
 
     ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
                         QdrantService qdrantService, OpenAiApiCaller openAiApiCaller )
@@ -193,9 +195,12 @@ class ResponseApiService
                     .set( "reasoning", reasoningNode )
                     .set( "include", includeNode );
 
+            Map< String, Integer > arraysToTrim = Map.of( "/request/input", this.previousMessagesSize );
+
             JsonNode responseNode = this.openAiApiCaller.getResponse(
                     this.taskName, this.apiEndpoint, requestNode, null,
-                    this.logApiSummary, this.logApiDetails, this.embeddedJsonPatterns );
+                    this.logApiSummary, this.logApiDetails,
+                    this.embeddedJsonPatterns, arraysToTrim );
 
             if ( this.logApiSummary )
             {
@@ -216,6 +221,7 @@ class ResponseApiService
 
             JsonNode outputNode = responseNode.path( "output" );
             for ( JsonNode messageNode : outputNode ) this.messages.add( messageNode );
+            this.previousMessagesSize = this.messages.size();
             response = this.handleOutput( outputNode );
         }
 

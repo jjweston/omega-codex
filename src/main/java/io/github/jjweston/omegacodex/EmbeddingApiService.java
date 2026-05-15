@@ -23,6 +23,7 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 class EmbeddingApiService
@@ -80,9 +81,12 @@ class EmbeddingApiService
         requestNode.put( "model", this.model );
         requestNode.put( "input", input );
 
+        Map< String, Integer > arraysToTrim = Map.of();
+
         JsonNode responseNode = this.openAiApiCaller.getResponse(
                 this.taskName, this.apiEndpoint, requestNode, startMessage,
-                this.logApiSummary, this.logApiDetails, this.embeddedJsonPatterns );
+                this.logApiSummary, this.logApiDetails,
+                this.embeddedJsonPatterns, arraysToTrim );
 
         if ( this.logApiSummary )
         {

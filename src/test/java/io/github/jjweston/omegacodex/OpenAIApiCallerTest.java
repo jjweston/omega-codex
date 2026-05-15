@@ -33,6 +33,7 @@ import tools.jackson.databind.node.ObjectNode;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
@@ -66,7 +67,8 @@ class OpenAIApiCallerTest
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> openAiApiCaller.getResponse(
-                        null, this.testApiEndpoint, requestNode, null, false, false, List.of() ));
+                        null, this.testApiEndpoint, requestNode, null,
+                        false, false, List.of(), Map.of() ));
 
         assertEquals( "Task name must not be null.", exception.getMessage() );
     }
@@ -80,7 +82,8 @@ class OpenAIApiCallerTest
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> openAiApiCaller.getResponse(
-                        this.testTaskName, null, requestNode, null, false, false, List.of() ));
+                        this.testTaskName, null, requestNode, null,
+                        false, false, List.of(), Map.of() ));
 
         assertEquals( "API endpoint must not be null.", exception.getMessage() );
     }
@@ -92,7 +95,8 @@ class OpenAIApiCallerTest
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, null, null, false, false, List.of() ));
+                        this.testTaskName, this.testApiEndpoint, null, null,
+                        false, false, List.of(), Map.of() ));
 
         assertEquals( "Request node must not be null.", exception.getMessage() );
     }
@@ -115,7 +119,8 @@ class OpenAIApiCallerTest
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, requestNode, null, false, false, List.of() ));
+                        this.testTaskName, this.testApiEndpoint, requestNode, null,
+                        false, false, List.of(),  Map.of() ));
 
         assertEquals( "OpenAIApiCallerTest, Error Returned, Status Code: 500", exception.getMessage() );
     }
@@ -145,7 +150,8 @@ class OpenAIApiCallerTest
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, requestNode, null, false, false, List.of() ));
+                        this.testTaskName, this.testApiEndpoint, requestNode, null,
+                        false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 401, Error Message: Invalid API key provided.";
@@ -167,7 +173,8 @@ class OpenAIApiCallerTest
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, requestNode, null, false, false, List.of() ));
+                        this.testTaskName, this.testApiEndpoint, requestNode, null,
+                        false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Failed to deserialize response. Status Code: 402, Response:" +
@@ -202,7 +209,8 @@ class OpenAIApiCallerTest
         this.mockApiCall( statusCode, responseString );
 
         JsonNode actualResponseNode = openAiApiCaller.getResponse(
-                this.testTaskName, this.testApiEndpoint, expectedRequestNode, "Start Message", true, false, List.of() );
+                this.testTaskName, this.testApiEndpoint, expectedRequestNode, "Start Message",
+                true, false, List.of(), Map.of() );
 
         String actualRequestString = this.requestBodyCaptor.getValue();
         JsonNode actualRequestNode = objectMapper.readTree( actualRequestString );
