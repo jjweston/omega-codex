@@ -31,6 +31,7 @@ limitations under the License.
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <exec.mainClass>io.github.jjweston.omegacodex.Query</exec.mainClass>
+        <exec.filename/>
     </properties>
 
     <profiles>
@@ -41,9 +42,15 @@ limitations under the License.
             </properties>
         </profile>
         <profile>
-            <id>split</id>
+            <id>text-split</id>
             <properties>
-                <exec.mainClass>io.github.jjweston.omegacodex.Split</exec.mainClass>
+                <exec.mainClass>io.github.jjweston.omegacodex.SplitTextFile</exec.mainClass>
+            </properties>
+        </profile>
+        <profile>
+            <id>markdown-split</id>
+            <properties>
+                <exec.mainClass>io.github.jjweston.omegacodex.SplitMarkdownFile</exec.mainClass>
             </properties>
         </profile>
         <profile>
@@ -227,12 +234,12 @@ limitations under the License.
                 <configuration>
                     <executable>java</executable>
                     <inheritIo>true</inheritIo>
-                    <arguments>
-                        <argument>--enable-native-access=ALL-UNNAMED</argument>
-                        <argument>-classpath</argument>
-                        <classpath/>
-                        <argument>${exec.mainClass}</argument>
-                    </arguments>
+                    <commandlineArgs>
+                        --enable-native-access=ALL-UNNAMED
+                        -classpath %classpath
+                        ${exec.mainClass}
+                        "${exec.filename}"
+                    </commandlineArgs>
                 </configuration>
             </plugin>
             <plugin>

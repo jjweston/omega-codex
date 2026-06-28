@@ -155,14 +155,18 @@ To run the *Command-Line Query Interface*: `mvn exec:exec`
 
 To run the *Embedding* proof of concept: `mvn exec:exec -P embed`
 
-To run the *Markdown Split* proof of concept: `mvn exec:exec -P split`
+To run the *Text Split* proof of concept: `mvn exec:exec -P text-split -D exec.filename=[filename]`
+
+Replace `[filename]` with the name of the text split to split.
+
+To run the *Markdown Split* proof of concept: `mvn exec:exec -P markdown-split`
 
 To run the *Qdrant* proof of concept: `mvn exec:exec -P qdrant`
 
 ## License
 
 ```text
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
