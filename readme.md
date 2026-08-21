@@ -17,7 +17,7 @@ all while integrating tightly with version control and issue tracking platforms 
 The current early development goal for Omega Codex is to develop a minimal functional implementation
 that is able to ingest basic information about a GitHub project into a vectorized knowledge base,
 allow a user to make a query about the project,
-use Retrieval Augmented Generation to send the user’s query
+use retrieval-augmented generation to send the user’s query
 along with relevant portions of the project to the ChatGPT API,
 and display the ChatGPT API response to the user.
 
@@ -57,9 +57,9 @@ You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.or
 Omega Codex is tested with the following versions, but other versions may also work:
 
 - Python:
-    - `3.14.7`
+  - `3.14.7`
 - Poetry:
-    - `2.4.1`
+  - `2.4.1`
 
 Ensure that your Python dependencies are installed and updated before running Omega Codex.
 Run the following in the `python-tools` directory:
@@ -70,9 +70,9 @@ poetry sync
 
 ### OpenAI API
 
-To use Omega Codex you'll need an [OpenAI API](https://openai.com/api/) key.
+You need an [OpenAI API](https://openai.com/api/) key to run Omega Codex.
 
-If you use an API key with *Restricted* permissions you must grant *Write* permission to the following resources:
+If you use an API key with *Restricted* permissions, you must grant *Write* permission to the following resources:
 - Model Capabilities
 - Responses API
 
@@ -100,14 +100,14 @@ docker create --name qdrant \
 
 This command does the following:
 
-* Assigns the name `qdrant` to the container (`--name`).
-* Opens network port 6333 for the Qdrant REST API (`-p`).
-* Opens network port 6334 for the Qdrant gRPC API (`-p`).
-* Attaches the `qdrant-storage` volume to `/qdrant/storage` for storing Qdrant's data (`-v`).
+- Assigns the name `qdrant` to the container (`--name`).
+- Opens network port 6333 for the Qdrant REST API (`-p`).
+- Opens network port 6334 for the Qdrant gRPC API (`-p`).
+- Attaches the `qdrant-storage` volume to `/qdrant/storage` for storing Qdrant's data (`-v`).
 
 To start the Qdrant Docker container: `docker start qdrant`
 
-Verify Qdrant is running by checking its web interface
+Verify that Qdrant is running by checking its web interface
 (replace `qdrant-host` with the hostname or IP of your Qdrant database):
 http://qdrant-host:6333/dashboard
 
@@ -123,13 +123,13 @@ To remove the `qdrant-storage` volume: `docker volume rm qdrant-storage`
 
 Omega Codex requires the following environment variables to be set:
 
-* `OMEGACODEX_OPENAI_API_KEY` : Your OpenAI API key.
-* `OMEGACODEX_QDRANT_HOST` : The host name or IP address of your Qdrant database.
-* `OMEGACODEX_QDRANT_GRPC_PORT` : The gRPC port of your Qdrant database, most likely `6334`.
+- `OMEGACODEX_OPENAI_API_KEY`: Your OpenAI API key.
+- `OMEGACODEX_QDRANT_HOST`: The host name or IP address of your Qdrant database.
+- `OMEGACODEX_QDRANT_GRPC_PORT`: The gRPC port of your Qdrant database, most likely `6334`.
 
 We use [dotenv-java](https://github.com/cdimascio/dotenv-java)
 to allow environment variables to be specified in a file.
-To do so, create filed called `.env` in your project root directory with the following:
+To do so, create a file named `.env` in your project root directory with the following:
 
 ```env
 OMEGACODEX_OPENAI_API_KEY=openai-api-key
@@ -145,7 +145,7 @@ Replace the values with settings appropriate for your environment.
 
 ## Building and Running
 
-To build Omega Codex, and run the unit tests: `mvn package`
+To build Omega Codex and run the unit tests: `mvn package`
 
 To run the integration tests: `mvn verify`
 
