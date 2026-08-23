@@ -60,7 +60,7 @@ class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.testIterationLimit, false, false, false,
+                        this.testIterationLimit, false, false, false, false, false,
                         null, this.mockEmbeddingService, this.mockQdrantService,
                         this.mockOpenAiApiCaller, this.mockOmegaCodexLogger ));
 
@@ -73,7 +73,7 @@ class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.testIterationLimit, false, false, false,
+                        this.testIterationLimit, false, false, false, false, false,
                         this.mockEmbeddingCacheService, null, this.mockQdrantService,
                         this.mockOpenAiApiCaller, this.mockOmegaCodexLogger ));
 
@@ -86,7 +86,7 @@ class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.testIterationLimit, false, false, false,
+                        this.testIterationLimit, false, false, false, false, false,
                         this.mockEmbeddingCacheService, this.mockEmbeddingService, null,
                         this.mockOpenAiApiCaller, this.mockOmegaCodexLogger ));
 
@@ -99,7 +99,7 @@ class ResponseApiServiceTest
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> new ResponseApiService(
-                        this.testIterationLimit, false, false, false,
+                        this.testIterationLimit, false, false, false, false, false,
                         this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                         null, this.mockOmegaCodexLogger ));
 
@@ -110,7 +110,7 @@ class ResponseApiServiceTest
     void getResponse_nullQuery()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -127,7 +127,7 @@ class ResponseApiServiceTest
         int iterationLimit = 1024;
 
         ResponseApiService responseApiService = new ResponseApiService(
-                iterationLimit, true, false, false,
+                iterationLimit, true, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -164,7 +164,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         when( this.mockEmbeddingService.getEmbedding( functionQuery )).thenReturn( queryEmbedding );
@@ -197,7 +198,7 @@ class ResponseApiServiceTest
     void getResponse_success()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, true, false, true,
+                this.testIterationLimit, true, false, false, false, true,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -300,7 +301,8 @@ class ResponseApiServiceTest
         List< JsonNode > inputNodeList = new LinkedList<>();
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .then( invocation ->
                 {
                     inputNodeList.add( invocation.getArgument( 2, ObjectNode.class ).path( "input" ).deepCopy() );
@@ -398,7 +400,7 @@ class ResponseApiServiceTest
     void handleOutput_noMessage_and_noFunctionCall()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -423,7 +425,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -442,7 +445,7 @@ class ResponseApiServiceTest
     void handleOutput_message_and_functionCall()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -489,7 +492,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         when( this.mockEmbeddingService.getEmbedding( testQuery )).thenReturn( queryEmbedding );
@@ -512,7 +516,7 @@ class ResponseApiServiceTest
     void handleOutput_noAssistantRole()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -547,7 +551,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -566,7 +571,7 @@ class ResponseApiServiceTest
     void handleOutput_multipleMessages()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -611,7 +616,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -630,7 +636,7 @@ class ResponseApiServiceTest
     void handleOutput_multipleContentElements()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -663,7 +669,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -682,7 +689,7 @@ class ResponseApiServiceTest
     void handleFunctionCall_invalidArguments()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -713,7 +720,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -732,7 +740,7 @@ class ResponseApiServiceTest
     void handleFunctionCall_invalidFunction()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -763,7 +771,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -782,7 +791,7 @@ class ResponseApiServiceTest
     void handleSearchReadme_emptyQuery()
     {
         ResponseApiService responseApiService = new ResponseApiService(
-                this.testIterationLimit, false, false, false,
+                this.testIterationLimit, false, false, false, false, false,
                 this.mockEmbeddingCacheService, this.mockEmbeddingService, this.mockQdrantService,
                 this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
@@ -813,7 +822,8 @@ class ResponseApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller.getResponse(
-                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(), any() ))
+                        any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(),
+                        any(), any() ))
                 .thenReturn( responseNode );
 
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,

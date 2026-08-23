@@ -37,7 +37,9 @@ class ResponseApiService
     private final String                model;
     private final int                   iterationLimit;
     private final boolean               logApiSummary;
-    private final boolean               logApiDetails;
+    private final boolean               logApiRequest;
+    private final boolean               logApiResponseHeaders;
+    private final boolean               logApiResponse;
     private final boolean               logFunctionCalls;
     private final List< Pattern >       embeddedJsonPatterns;
     private final ObjectMapper          objectMapper;
@@ -56,16 +58,19 @@ class ResponseApiService
     ResponseApiService( EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
                         QdrantService qdrantService, OpenAiApiCaller openAiApiCaller )
     {
-        int     iterationLimit   = 5;
-        boolean logApiSummary    = true;
-        boolean logApiDetails    = false;
-        boolean logFunctionCalls = true;
+        int     iterationLimit        = 5;
+        boolean logApiSummary         = true;
+        boolean logApiRequest         = false;
+        boolean logApiResponseHeaders = false;
+        boolean logApiResponse        = false;
+        boolean logFunctionCalls      = true;
 
-        this( iterationLimit, logApiSummary, logApiDetails, logFunctionCalls,
-              embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexLogger() );
+        this( iterationLimit, logApiSummary, logApiRequest, logApiResponseHeaders, logApiResponse, logFunctionCalls,
+                embeddingCacheService, embeddingService, qdrantService, openAiApiCaller, new OmegaCodexLogger() );
     }
 
-    ResponseApiService( int iterationLimit, boolean logApiSummary, boolean logApiDetails, boolean logFunctionCalls,
+    ResponseApiService( int iterationLimit, boolean logApiSummary, boolean logApiRequest,
+                        boolean logApiResponseHeaders, boolean logApiResponse, boolean logFunctionCalls,
                         EmbeddingCacheService embeddingCacheService, EmbeddingService embeddingService,
                         QdrantService qdrantService, OpenAiApiCaller openAiApiCaller,
                         OmegaCodexLogger omegaCodexLogger )
@@ -81,7 +86,9 @@ class ResponseApiService
         this.model                 = "gpt-5.5";
         this.iterationLimit        = iterationLimit;
         this.logApiSummary         = logApiSummary;
-        this.logApiDetails         = logApiDetails;
+        this.logApiRequest         = logApiRequest;
+        this.logApiResponseHeaders = logApiResponseHeaders;
+        this.logApiResponse        = logApiResponse;
         this.logFunctionCalls      = logFunctionCalls;
         this.embeddedJsonPatterns  = List.of(
                 Pattern.compile( "^/request/input/\\d+/arguments$" ),
@@ -185,7 +192,7 @@ class ResponseApiService
             if ( ++iterationCount > this.iterationLimit )
             {
                 throw new OmegaCodexException( String.format(
-                        "Failed to get response within %,d iterations.", iterationLimit ));
+                        "Failed to get response within %,d iterations.", this.iterationLimit ));
             }
 
             ObjectNode requestNode = this.objectMapper.createObjectNode()
@@ -199,7 +206,7 @@ class ResponseApiService
 
             JsonNode responseNode = this.openAiApiCaller.getResponse(
                     this.taskName, this.apiEndpoint, requestNode, null,
-                    this.logApiSummary, this.logApiDetails,
+                    this.logApiSummary, this.logApiRequest, this.logApiResponseHeaders, this.logApiResponse,
                     this.embeddedJsonPatterns, arraysToTrim );
 
             if ( this.logApiSummary )
@@ -294,7 +301,7 @@ class ResponseApiService
         String output          = null;
 
         JsonNode argumentsNode;
-        try { argumentsNode = objectMapper.readTree( argumentsString ); }
+        try { argumentsNode = this.objectMapper.readTree( argumentsString ); }
         catch ( JacksonException e )
         {
             throw new OmegaCodexException( String.format(
@@ -332,8 +339,9 @@ class ResponseApiService
         int maxIdLength = !this.logFunctionCalls ? 1 : searchResults.stream()
                 .mapToInt( searchResult -> String.format( "%,d", searchResult.id() ).length() )
                 .max().orElse( 1 );
+        String functionCallLogFormat = String.format( "Chunk: %%,%dd, Score: %%.10f%%s", maxIdLength );
 
-        ArrayNode resultList = objectMapper.createArrayNode();
+        ArrayNode resultList = this.objectMapper.createArrayNode();
         for ( SearchResult searchResult : searchResults )
         {
             long   id         = searchResult.id();
@@ -342,11 +350,11 @@ class ResponseApiService
 
             if ( this.logFunctionCalls )
             {
-                this.omegaCodexLogger.println( String.format(
-                        "Chunk: %," + maxIdLength + "d, Score: %.10f%s", id, score, duplicate ? ", Duplicate" : "" ));
+                this.omegaCodexLogger.println(
+                        String.format( functionCallLogFormat, id, score, duplicate ? ", Duplicate" : "" ));
             }
 
-            ObjectNode resultNode = objectMapper.createObjectNode()
+            ObjectNode resultNode = this.objectMapper.createObjectNode()
                     .put( "id", id )
                     .put( "score", score );
 
