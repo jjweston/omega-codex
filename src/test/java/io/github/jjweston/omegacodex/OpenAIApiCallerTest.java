@@ -31,43 +31,51 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith( MockitoExtension.class )
 class OpenAIApiCallerTest
 {
-    private final String testTaskName      = "OpenAIApiCallerTest";
-    private final String testApiEndpoint   = "https://example.org/v1/test";
-    private final String testApiKeyVarName = "OMEGACODEX_TEST_API_KEY";
+    private final int        testMaxAttempts   = 5;
+    private final String     testTaskName      = "OpenAIApiCallerTest";
+    private final String     testApiEndpoint   = "https://example.org/v1/test";
+    private final String     testApiKeyVarName = "OMEGACODEX_TEST_API_KEY";
+    private final ObjectNode testRequestNode   = JsonNodeFactory.instance.objectNode();
 
     @Mock private Environment            mockEnvironment;
     @Mock private HttpRequestBuilder     mockHttpRequestBuilder;
     @Mock private HttpClient             mockHttpClient;
-    @Mock private OmegaCodexUtil         mockOmegaCodexUtil;
+    @Mock private Random                 mockRandom;
+    @Mock private OmegaCodexUtil         mockOmegaCodexUtil_OpenAiApiCaller;
+    @Mock private OmegaCodexUtil         mockOmegaCodexUtil_TaskRunner;
     @Mock private OmegaCodexLogger       mockOmegaCodexLogger;
     @Mock private HttpResponse< String > mockHttpResponse;
+    @Mock private HttpHeaders            mockHttpHeaders;
 
     @Captor private ArgumentCaptor< String > requestBodyCaptor;
 
     @Test
     void testGetResponse_nullTaskName()
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-        ObjectMapper    objectMapper    = new ObjectMapper();
-        ObjectNode      requestNode     = objectMapper.createObjectNode();
-
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> openAiApiCaller.getResponse(
-                        null, this.testApiEndpoint, requestNode, null,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        null, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, List.of(), Map.of() ));
 
         assertEquals( "Task name must not be null.", exception.getMessage() );
@@ -76,13 +84,9 @@ class OpenAIApiCallerTest
     @Test
     void testGetResponse_nullApiEndpoint()
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-        ObjectMapper    objectMapper    = new ObjectMapper();
-        ObjectNode      requestNode     = objectMapper.createObjectNode();
-
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> openAiApiCaller.getResponse(
-                        this.testTaskName, null, requestNode, null,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, null, this.testRequestNode, null,
                         false, false, List.of(), Map.of() ));
 
         assertEquals( "API endpoint must not be null.", exception.getMessage() );
@@ -91,10 +95,8 @@ class OpenAIApiCallerTest
     @Test
     void testGetResponse_nullRequestNode()
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> openAiApiCaller.getResponse(
+                () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, null, null,
                         false, false, List.of(), Map.of() ));
 
@@ -102,24 +104,197 @@ class OpenAIApiCallerTest
     }
 
     @Test
-    void testGetResponse_error_noMessage() throws Exception
+    void testGetResponse_rateLimit_noRetry() throws Exception
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-        ObjectMapper    objectMapper    = new ObjectMapper();
-        ObjectNode      requestNode     = objectMapper.createObjectNode();
-        int             statusCode      = 500;
+        String response =
+                """
+                {
+                    "error":
+                    {
+                        "message": "Request too large.",
+                        "type": "tokens",
+                        "code": "rate_limit_exceeded",
+                        "param": null
+                    }
+                }
+                """;
 
+        this.mockApiCall( response, 429 );
+        when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
+                        false, false, List.of(), Map.of() ));
+
+        String expectedMessage =
+                "OpenAIApiCallerTest, Error Returned, Status Code: 429, Error Message: Request too large.";
+
+        assertEquals( expectedMessage, exception.getMessage() );
+    }
+
+    @Test
+    void testGetResponse_rateLimit_invalidRetryDelay() throws Exception
+    {
+        String response =
+                """
+                {
+                    "error":
+                    {
+                        "message": "Rate limit reached. Please try again in -5 ms.",
+                        "type": "tokens",
+                        "code": "rate_limit_exceeded",
+                        "param": null
+                    }
+                }
+                """;
+
+        this.mockApiCall( response, 429 );
+        when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
+        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( -5 ));
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
+                        false, false, List.of(), Map.of() ));
+
+        String expectedMessage =
+                "OpenAIApiCallerTest, Error Returned, Status Code: 429, " +
+                "Error Message: Rate limit reached. Please try again in -5 ms.";
+
+        assertEquals( expectedMessage, exception.getMessage() );
+
+        verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
+    }
+
+    @Test
+    void testGetResponse_rateLimit_maxAttemptsExceeded() throws Exception
+    {
+        String response =
+                """
+                {
+                    "error":
+                    {
+                        "message": "Rate limit reached. Please try again in 1000 ms.",
+                        "type": "tokens",
+                        "code": "rate_limit_exceeded",
+                        "param": null
+                    }
+                }
+                """;
+
+        this.mockApiCall( response, 429 );
+        when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
+        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 1_000 ));
+        when( this.mockRandom.nextFloat() ).thenReturn( 0.5f );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
+                        false, false, List.of(), Map.of() ));
+
+        String expectedMessage =
+                "OpenAIApiCallerTest, Error Returned, Status Code: 429, " +
+                        "Error Message: Rate limit reached. Please try again in 1000 ms.";
+
+        assertEquals( expectedMessage, exception.getMessage() );
+
+        verify( this.mockOmegaCodexUtil_OpenAiApiCaller, times( this.testMaxAttempts - 1 )).sleepThread( 1_150 );
+        verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
+    }
+
+    @Test
+    void testGetResponse_rateLimit_sleepInterrupted() throws Exception
+    {
+        String response =
+                """
+                {
+                    "error":
+                    {
+                        "message": "Rate limit reached. Please try again in 2000 ms.",
+                        "type": "tokens",
+                        "code": "rate_limit_exceeded",
+                        "param": null
+                    }
+                }
+                """;
+
+        InterruptedException interruptedException = new InterruptedException( "Test Interruption" );
+
+        this.mockApiCall( response, 429 );
+        when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
+        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 2_000 ));
+        when( this.mockRandom.nextFloat() ).thenReturn( 0.25f );
+        doThrow( interruptedException ).when( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 2_250 );
+
+        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
+                        false, false, List.of(), Map.of() ));
+
+        String expectedMessage = "OpenAIApiCallerTest, Retry Sleep Interrupted";
+
+        assertEquals( expectedMessage, exception.getMessage() );
+        assertEquals( interruptedException, exception.getCause() );
+
+        verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).interruptThread();
+        verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
+    }
+
+    @Test
+    void testGetResponse_rateLimit_retrySuccess() throws Exception
+    {
+        String response =
+                """
+                {
+                  "color": "yellow",
+                  "noun": "snow"
+                }
+                """;
+
+        JsonNode expectedResponseNode = JsonNodeFactory.instance.objectNode()
+                .put( "color", "yellow" )
+                .put( "noun", "snow" );
+
+        this.mockApiCall( response, 429, 200 );
+        when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
+        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 5_000 ));
+        when( this.mockRandom.nextFloat() ).thenReturn( 0.75f );
+
+        JsonNode actualResponseNode = this.createOpenAiApiCaller().getResponse(
+                this.testTaskName, this.testApiEndpoint, this.testRequestNode, "Start Message",
+                true, false, List.of(), Map.of() );
+
+        assertEquals( expectedResponseNode, actualResponseNode );
+
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, " +
+                "Rate Limit Exceeded, Attempt: 1, Retry Delay: 5,000 ms, Jitter: 1.175, Sleeping: 5,875 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
+        inOrder.verifyNoMoreInteractions();
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
+
+        verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 5_875 );
+        verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
+    }
+
+    @Test
+    void testGetResponse_error_withoutMessage() throws Exception
+    {
         String response =
                 """
                 {
                 }
                 """;
 
-        this.mockApiCall( statusCode, response );
+        this.mockApiCall( response, 500 );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
-                () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, requestNode, null,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, List.of(),  Map.of() ));
 
         assertEquals( "OpenAIApiCallerTest, Error Returned, Status Code: 500", exception.getMessage() );
@@ -128,33 +303,28 @@ class OpenAIApiCallerTest
     @Test
     void testGetResponse_error_withMessage() throws Exception
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-        ObjectMapper    objectMapper    = new ObjectMapper();
-        ObjectNode      requestNode     = objectMapper.createObjectNode();
-        int             statusCode      = 401;
-
         String response =
                 """
                 {
                     "error":
                     {
-                        "message": "Invalid API key provided.",
+                        "message": "Incorrect API key provided.",
                         "type": "invalid_request_error",
-                        "param": null,
-                        "code": "invalid_api_key"
+                        "code": "invalid_api_key",
+                        "param": null
                     }
                 }
                 """;
 
-        this.mockApiCall( statusCode, response );
+        this.mockApiCall( response, 401 );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
-                () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, requestNode, null,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, List.of(), Map.of() ));
 
         String expectedMessage =
-                "OpenAIApiCallerTest, Error Returned, Status Code: 401, Error Message: Invalid API key provided.";
+                "OpenAIApiCallerTest, Error Returned, Status Code: 401, Error Message: Incorrect API key provided.";
 
         assertEquals( expectedMessage, exception.getMessage() );
     }
@@ -162,18 +332,13 @@ class OpenAIApiCallerTest
     @Test
     void testGetResponse_invalidResponse() throws Exception
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-        ObjectMapper    objectMapper    = new ObjectMapper();
-        ObjectNode      requestNode     = objectMapper.createObjectNode();
-        int             statusCode      = 402;
+        String response = "This is not valid JSON.";
 
-        String responseString = "This is not valid JSON.";
-
-        this.mockApiCall( statusCode, responseString );
+        this.mockApiCall( response, 402 );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
-                () -> openAiApiCaller.getResponse(
-                        this.testTaskName, this.testApiEndpoint, requestNode, null,
+                () -> this.createOpenAiApiCaller().getResponse(
+                        this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, List.of(), Map.of() ));
 
         String expectedMessage =
@@ -187,11 +352,9 @@ class OpenAIApiCallerTest
     @Test
     void testGetResponse_success() throws Exception
     {
-        OpenAiApiCaller openAiApiCaller = this.createOpenAiApiCaller();
-        ObjectMapper    objectMapper    = new ObjectMapper();
-        int             statusCode      = 200;
+        ObjectMapper objectMapper = new ObjectMapper();
 
-        String responseString =
+        String response =
                 """
                 {
                   "adjective": "frozen",
@@ -199,16 +362,16 @@ class OpenAIApiCallerTest
                 }
                 """;
 
-        ObjectNode expectedRequestNode = objectMapper.createObjectNode()
+        ObjectNode expectedRequestNode = JsonNodeFactory.instance.objectNode()
                 .put( "query", "What is your favorite food?" );
 
-        JsonNode expectedResponseNode = JsonNodeFactory.instance.objectNode()
+        ObjectNode expectedResponseNode = JsonNodeFactory.instance.objectNode()
                 .put( "adjective", "frozen" )
                 .put( "noun", "yogurt" );
 
-        this.mockApiCall( statusCode, responseString );
+        this.mockApiCall( response, 200 );
 
-        JsonNode actualResponseNode = openAiApiCaller.getResponse(
+        JsonNode actualResponseNode = this.createOpenAiApiCaller().getResponse(
                 this.testTaskName, this.testApiEndpoint, expectedRequestNode, "Start Message",
                 true, false, List.of(), Map.of() );
 
@@ -219,23 +382,23 @@ class OpenAIApiCallerTest
         assertEquals( expectedResponseNode, actualResponseNode );
 
         InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
-
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
-
         inOrder.verifyNoMoreInteractions();
         verifyNoMoreInteractions( this.mockOmegaCodexLogger );
     }
 
     private OpenAiApiCaller createOpenAiApiCaller()
     {
-        TaskRunner testTaskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil, this.mockOmegaCodexLogger );
+        TaskRunner testTaskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil_TaskRunner, this.mockOmegaCodexLogger );
 
-        return new OpenAiApiCaller( this.testApiKeyVarName, this.mockEnvironment, this.mockHttpRequestBuilder,
-                                    this.mockHttpClient, this.mockOmegaCodexLogger, testTaskRunner );
+        return new OpenAiApiCaller(
+                this.testMaxAttempts, this.testApiKeyVarName, this.mockEnvironment, this.mockHttpRequestBuilder,
+                this.mockHttpClient, this.mockRandom, this.mockOmegaCodexUtil_OpenAiApiCaller,
+                this.mockOmegaCodexLogger, testTaskRunner );
     }
 
-    private void mockApiCall( int statusCode, String response ) throws Exception
+    private void mockApiCall( String response, int... statusCodes ) throws Exception
     {
         String testApiKey = "Test API Key";
 
@@ -249,7 +412,17 @@ class OpenAIApiCallerTest
         when( this.mockHttpRequestBuilder.POST( this.requestBodyCaptor.capture() ))
                 .thenReturn( this.mockHttpRequestBuilder );
         when( this.mockHttpClient.< String >send( any(), any() )).thenReturn( this.mockHttpResponse );
-        when( this.mockHttpResponse.statusCode() ).thenReturn( statusCode );
-        when( this.mockHttpResponse.body() ).thenReturn( response );
+        if ( response != null ) when( this.mockHttpResponse.body() ).thenReturn( response );
+
+        if ( statusCodes.length > 0 )
+        {
+            Integer firstStatusCode = statusCodes[ 0 ];
+            Integer[] remainingStatusCodes = Arrays
+                    .stream( statusCodes, 1, statusCodes.length )
+                    .boxed()
+                    .toArray( Integer[]::new );
+
+            when( this.mockHttpResponse.statusCode() ).thenReturn( firstStatusCode, remainingStatusCodes );
+        }
     }
 }
