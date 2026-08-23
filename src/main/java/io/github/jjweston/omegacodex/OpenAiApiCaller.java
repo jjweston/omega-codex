@@ -23,6 +23,7 @@ import tools.jackson.core.JsonPointer;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 import tools.jackson.dataformat.yaml.YAMLWriteFeature;
@@ -32,14 +33,19 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 class OpenAiApiCaller
 {
+    private final int                maxAttempts;
     private final String             apiKeyVarName;
     private final Environment        environment;
     private final HttpRequestBuilder httpRequestBuilder;
     private final HttpClient         httpClient;
+    private final Random             random;
+    private final OmegaCodexUtil     omegaCodexUtil;
     private final OmegaCodexLogger   omegaCodexLogger;
     private final TaskRunner         taskRunner;
     private final ObjectMapper       objectMapper;
@@ -47,21 +53,28 @@ class OpenAiApiCaller
 
     OpenAiApiCaller()
     {
-        this( "OMEGACODEX_OPENAI_API_KEY",
+        this( 5,
+              "OMEGACODEX_OPENAI_API_KEY",
               new Environment(),
               new HttpRequestBuilder(),
               HttpClient.newHttpClient(),
+              new Random(),
+              new OmegaCodexUtil(),
               new OmegaCodexLogger(),
               new TaskRunner( 200 ));
     }
 
-    OpenAiApiCaller( String apiKeyVarName, Environment environment, HttpRequestBuilder httpRequestBuilder,
-                     HttpClient httpClient, OmegaCodexLogger omegaCodexLogger, TaskRunner taskRunner )
+    OpenAiApiCaller( int maxAttempts, String apiKeyVarName, Environment environment,
+                     HttpRequestBuilder httpRequestBuilder, HttpClient httpClient, Random random,
+                     OmegaCodexUtil omegaCodexUtil, OmegaCodexLogger omegaCodexLogger, TaskRunner taskRunner )
     {
+        this.maxAttempts        = maxAttempts;
         this.apiKeyVarName      = apiKeyVarName;
         this.environment        = environment;
         this.httpRequestBuilder = httpRequestBuilder;
         this.httpClient         = httpClient;
+        this.random             = random;
+        this.omegaCodexUtil     = omegaCodexUtil;
         this.omegaCodexLogger   = omegaCodexLogger;
         this.taskRunner         = taskRunner;
         this.objectMapper       = new ObjectMapper();
@@ -85,12 +98,12 @@ class OpenAiApiCaller
         if ( logApiDetails )
         {
             String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString( this.prepareJsonForLogging(
-                    JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns, arraysToTrim ));
+                    JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns, arraysToTrim )).trim();
 
-            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
+            this.omegaCodexLogger.println( "-".repeat( 70 ));
             this.omegaCodexLogger.println( "Request:" );
             this.omegaCodexLogger.println( debugRequestString );
-            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
+            this.omegaCodexLogger.println( "-".repeat( 70 ));
         }
 
         HttpRequest request = this.httpRequestBuilder.reset()
@@ -100,31 +113,64 @@ class OpenAiApiCaller
                 .POST( requestString )
                 .build();
 
-        HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, logApiSummary,
-                () -> this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
+        int statusCode = 0;
+        JsonNode responseNode = JsonNodeFactory.instance.objectNode();
 
-        int statusCode = response.statusCode();
-        String responseString = response.body();
-
-        JsonNode responseNode;
-        try { responseNode = this.objectMapper.readTree( responseString ); }
-        catch ( JacksonException e )
+        for ( int attempt = 1; attempt <= this.maxAttempts; attempt++ )
         {
-            throw new OmegaCodexException(
-                    String.format( "%s, Failed to deserialize response. Status Code: %d, Response:%n%s",
-                                   taskName, statusCode, responseString ), e );
-        }
+            HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, logApiSummary,
+                    () -> this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
 
-        if ( logApiDetails )
-        {
-            String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString( this.prepareJsonForLogging(
-                    JsonPointer.compile( "/response" ), responseNode, embeddedJsonPatterns, arraysToTrim ));
+            statusCode = response.statusCode();
+            String responseString = response.body();
 
-            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
-            this.omegaCodexLogger.println( "Status Code: " + statusCode );
-            this.omegaCodexLogger.println( "Response:" );
-            this.omegaCodexLogger.println( debugResponseString );
-            this.omegaCodexLogger.println( "----------------------------------------------------------------------" );
+            try { responseNode = this.objectMapper.readTree( responseString ); }
+            catch ( JacksonException e )
+            {
+                throw new OmegaCodexException(
+                        String.format( "%s, Failed to deserialize response. Status Code: %d, Response:%n%s",
+                                taskName, statusCode, responseString ), e );
+            }
+
+            if ( logApiDetails )
+            {
+                String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString(
+                        this.prepareJsonForLogging( JsonPointer.compile( "/response" ),
+                                                    responseNode, embeddedJsonPatterns, arraysToTrim )).trim();
+
+                this.omegaCodexLogger.println( "-".repeat( 70 ));
+                this.omegaCodexLogger.println( "Status Code: " + statusCode );
+                this.omegaCodexLogger.println( "Response:" );
+                this.omegaCodexLogger.println( debugResponseString.trim() );
+                this.omegaCodexLogger.println( "-".repeat( 70 ));
+            }
+
+            if ( statusCode != 429 ) break;
+
+            OptionalLong retryDelayHeader = response.headers().firstValueAsLong( "retry-after-ms" );
+            if ( retryDelayHeader.isEmpty() ) break;
+
+            long retryDelay = retryDelayHeader.getAsLong();
+            if ( retryDelay <= 0 ) break;
+
+            if ( attempt == this.maxAttempts ) break;
+
+            float jitter = this.random.nextFloat() / 10 + 1.1f;
+            long sleepDelay = (long) ( retryDelay * jitter );
+
+            if ( logApiSummary )
+            {
+                this.omegaCodexLogger.println( String.format(
+                        "%s, Rate Limit Exceeded, Attempt: %,d, Retry Delay: %,d ms, Jitter: %.3f, Sleeping: %,d ms",
+                        taskName, attempt, retryDelay, jitter, sleepDelay ));
+            }
+
+            try { this.omegaCodexUtil.sleepThread( sleepDelay ); }
+            catch ( InterruptedException e )
+            {
+                this.omegaCodexUtil.interruptThread();
+                throw new OmegaCodexException( taskName + ", Retry Sleep Interrupted", e );
+            }
         }
 
         if ( statusCode != 200 )
