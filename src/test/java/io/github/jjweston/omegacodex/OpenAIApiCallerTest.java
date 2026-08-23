@@ -175,7 +175,7 @@ class OpenAIApiCallerTest
                 {
                     "error":
                     {
-                        "message": "Rate limit reached. Please try again in 1000 ms.",
+                        "message": "Rate limit reached. Please try again in 20000 ms.",
                         "type": "tokens",
                         "code": "rate_limit_exceeded",
                         "param": null
@@ -185,7 +185,7 @@ class OpenAIApiCallerTest
 
         this.mockApiCall( response, 429 );
         when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
-        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 1_000 ));
+        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 20_000 ));
         when( this.mockRandom.nextFloat() ).thenReturn( 0.5f );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
@@ -195,11 +195,11 @@ class OpenAIApiCallerTest
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 429, " +
-                        "Error Message: Rate limit reached. Please try again in 1000 ms.";
+                        "Error Message: Rate limit reached. Please try again in 20000 ms.";
 
         assertEquals( expectedMessage, exception.getMessage() );
 
-        verify( this.mockOmegaCodexUtil_OpenAiApiCaller, times( this.testMaxAttempts - 1 )).sleepThread( 1_150 );
+        verify( this.mockOmegaCodexUtil_OpenAiApiCaller, times( this.testMaxAttempts - 1 )).sleepThread( 23_000 );
         verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
     }
 
@@ -211,7 +211,7 @@ class OpenAIApiCallerTest
                 {
                     "error":
                     {
-                        "message": "Rate limit reached. Please try again in 2000 ms.",
+                        "message": "Rate limit reached. Please try again in 30000 ms.",
                         "type": "tokens",
                         "code": "rate_limit_exceeded",
                         "param": null
@@ -223,9 +223,9 @@ class OpenAIApiCallerTest
 
         this.mockApiCall( response, 429 );
         when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
-        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 2_000 ));
+        when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 30_000 ));
         when( this.mockRandom.nextFloat() ).thenReturn( 0.25f );
-        doThrow( interruptedException ).when( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 2_250 );
+        doThrow( interruptedException ).when( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 33_750 );
 
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
@@ -270,14 +270,14 @@ class OpenAIApiCallerTest
         InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
-        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, " +
-                "Rate Limit Exceeded, Attempt: 1, Retry Delay: 5,000 ms, Jitter: 1.175, Sleeping: 5,875 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Rate Limit Exceeded, " +
+                "Attempt: 1, Raw Retry Delay: 5,000 ms, Retry Delay: 10,000 ms, Jitter: 1.175, Sleeping: 11,750 ms" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
         inOrder.verifyNoMoreInteractions();
         verifyNoMoreInteractions( this.mockOmegaCodexLogger );
 
-        verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 5_875 );
+        verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 11_750 );
         verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
     }
 
@@ -390,12 +390,13 @@ class OpenAIApiCallerTest
 
     private OpenAiApiCaller createOpenAiApiCaller()
     {
+        long testMinimumRetryDelay = 10_000;
         TaskRunner testTaskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil_TaskRunner, this.mockOmegaCodexLogger );
 
         return new OpenAiApiCaller(
-                this.testMaxAttempts, this.testApiKeyVarName, this.mockEnvironment, this.mockHttpRequestBuilder,
-                this.mockHttpClient, this.mockRandom, this.mockOmegaCodexUtil_OpenAiApiCaller,
-                this.mockOmegaCodexLogger, testTaskRunner );
+                this.testMaxAttempts, testMinimumRetryDelay, this.testApiKeyVarName, this.mockEnvironment,
+                this.mockHttpRequestBuilder, this.mockHttpClient, this.mockRandom,
+                this.mockOmegaCodexUtil_OpenAiApiCaller, this.mockOmegaCodexLogger, testTaskRunner );
     }
 
     private void mockApiCall( String response, int... statusCodes ) throws Exception

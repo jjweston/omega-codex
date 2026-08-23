@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 class OpenAiApiCaller
 {
     private final int                maxAttempts;
+    private final long               minimumRetryDelay;
     private final String             apiKeyVarName;
     private final Environment        environment;
     private final HttpRequestBuilder httpRequestBuilder;
@@ -57,6 +58,7 @@ class OpenAiApiCaller
     OpenAiApiCaller()
     {
         this( 5,
+              10_000,
               "OMEGACODEX_OPENAI_API_KEY",
               new Environment(),
               new HttpRequestBuilder(),
@@ -67,11 +69,12 @@ class OpenAiApiCaller
               new TaskRunner( 200 ));
     }
 
-    OpenAiApiCaller( int maxAttempts, String apiKeyVarName, Environment environment,
+    OpenAiApiCaller( int maxAttempts, long minimumRetryDelay, String apiKeyVarName, Environment environment,
                      HttpRequestBuilder httpRequestBuilder, HttpClient httpClient, Random random,
                      OmegaCodexUtil omegaCodexUtil, OmegaCodexLogger omegaCodexLogger, TaskRunner taskRunner )
     {
         this.maxAttempts        = maxAttempts;
+        this.minimumRetryDelay  = minimumRetryDelay;
         this.apiKeyVarName      = apiKeyVarName;
         this.environment        = environment;
         this.httpRequestBuilder = httpRequestBuilder;
@@ -170,19 +173,21 @@ class OpenAiApiCaller
             OptionalLong retryDelayHeader = response.headers().firstValueAsLong( "retry-after-ms" );
             if ( retryDelayHeader.isEmpty() ) break;
 
-            long retryDelay = retryDelayHeader.getAsLong();
-            if ( retryDelay <= 0 ) break;
+            long rawRetryDelay = retryDelayHeader.getAsLong();
+            if ( rawRetryDelay <= 0 ) break;
 
             if ( attempt == this.maxAttempts ) break;
 
+            long retryDelay = Math.max( rawRetryDelay, this.minimumRetryDelay );
             float jitter = this.random.nextFloat() / 10 + 1.1f;
             long sleepDelay = (long) ( retryDelay * jitter );
 
             if ( logSummary )
             {
                 this.omegaCodexLogger.println( String.format(
-                        "%s, Rate Limit Exceeded, Attempt: %,d, Retry Delay: %,d ms, Jitter: %.3f, Sleeping: %,d ms",
-                        taskName, attempt, retryDelay, jitter, sleepDelay ));
+                        "%s, Rate Limit Exceeded, Attempt: %,d, " +
+                        "Raw Retry Delay: %,d ms, Retry Delay: %,d ms, Jitter: %.3f, Sleeping: %,d ms",
+                        taskName, attempt, rawRetryDelay, retryDelay, jitter, sleepDelay ));
             }
 
             try { this.omegaCodexUtil.sleepThread( sleepDelay ); }
