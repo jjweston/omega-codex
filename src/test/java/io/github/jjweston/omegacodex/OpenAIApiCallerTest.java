@@ -76,7 +76,7 @@ class OpenAIApiCallerTest
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         null, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         assertEquals( "Task name must not be null.", exception.getMessage() );
     }
@@ -87,7 +87,7 @@ class OpenAIApiCallerTest
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, null, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         assertEquals( "API endpoint must not be null.", exception.getMessage() );
     }
@@ -98,7 +98,7 @@ class OpenAIApiCallerTest
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, null, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         assertEquals( "Request node must not be null.", exception.getMessage() );
     }
@@ -125,7 +125,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 429, Error Message: Request too large.";
@@ -156,7 +156,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 429, " +
@@ -191,7 +191,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 429, " +
@@ -230,7 +230,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage = "OpenAIApiCallerTest, Retry Sleep Interrupted";
 
@@ -263,7 +263,7 @@ class OpenAIApiCallerTest
 
         JsonNode actualResponseNode = this.createOpenAiApiCaller().getResponse(
                 this.testTaskName, this.testApiEndpoint, this.testRequestNode, "Start Message",
-                true, false, List.of(), Map.of() );
+                true, false, false, false, List.of(), Map.of() );
 
         assertEquals( expectedResponseNode, actualResponseNode );
 
@@ -295,7 +295,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(),  Map.of() ));
+                        false, false, false, false, List.of(),  Map.of() ));
 
         assertEquals( "OpenAIApiCallerTest, Error Returned, Status Code: 500", exception.getMessage() );
     }
@@ -321,7 +321,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 401, Error Message: Incorrect API key provided.";
@@ -339,7 +339,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, List.of(), Map.of() ));
+                        false, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Failed to deserialize response. Status Code: 402, Response:" +
@@ -373,7 +373,7 @@ class OpenAIApiCallerTest
 
         JsonNode actualResponseNode = this.createOpenAiApiCaller().getResponse(
                 this.testTaskName, this.testApiEndpoint, expectedRequestNode, "Start Message",
-                true, false, List.of(), Map.of() );
+                true, false, false, false, List.of(), Map.of() );
 
         String actualRequestString = this.requestBodyCaptor.getValue();
         JsonNode actualRequestNode = objectMapper.readTree( actualRequestString );

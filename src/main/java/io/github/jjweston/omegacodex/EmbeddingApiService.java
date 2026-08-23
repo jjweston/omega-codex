@@ -33,33 +33,41 @@ class EmbeddingApiService
     private final String           model;
     private final int              inputLimit;
     private final boolean          logApiSummary;
-    private final boolean          logApiDetails;
+    private final boolean          logApiRequest;
+    private final boolean          logApiResponseHeaders;
+    private final boolean          logApiResponse;
     private final List< Pattern >  embeddedJsonPatterns;
     private final OpenAiApiCaller  openAiApiCaller;
     private final OmegaCodexLogger omegaCodexLogger;
 
     EmbeddingApiService( OpenAiApiCaller openAiApiCaller )
     {
-        boolean logApiSummary = false;
-        boolean logApiDetails = false;
+        boolean logApiSummary         = false;
+        boolean logApiRequest         = false;
+        boolean logApiResponseHeaders = false;
+        boolean logApiResponse        = false;
 
-        this( logApiSummary, logApiDetails, openAiApiCaller, new OmegaCodexLogger() );
+        this( logApiSummary, logApiRequest, logApiResponseHeaders, logApiResponse,
+                openAiApiCaller, new OmegaCodexLogger() );
     }
 
-    EmbeddingApiService( boolean logApiSummary, boolean logApiDetails,
-                         OpenAiApiCaller openAiApiCaller, OmegaCodexLogger omegaCodexLogger )
+    EmbeddingApiService(
+            boolean logApiSummary, boolean logApiRequest, boolean logApiResponseHeaders, boolean logApiResponse,
+            OpenAiApiCaller openAiApiCaller, OmegaCodexLogger omegaCodexLogger )
     {
         if ( openAiApiCaller == null ) throw new IllegalArgumentException( "OpenAI API caller must not be null." );
 
-        this.taskName             = "Embedding API Call";
-        this.apiEndpoint          = "https://api.openai.com/v1/embeddings";
-        this.model                = "text-embedding-3-small";
-        this.inputLimit           = 20_000;
-        this.logApiSummary        = logApiSummary;
-        this.logApiDetails        = logApiDetails;
-        this.embeddedJsonPatterns = List.of();
-        this.openAiApiCaller      = openAiApiCaller;
-        this.omegaCodexLogger     = omegaCodexLogger;
+        this.taskName              = "Embedding API Call";
+        this.apiEndpoint           = "https://api.openai.com/v1/embeddings";
+        this.model                 = "text-embedding-3-small";
+        this.inputLimit            = 20_000;
+        this.logApiSummary         = logApiSummary;
+        this.logApiRequest         = logApiRequest;
+        this.logApiResponseHeaders = logApiResponseHeaders;
+        this.logApiResponse        = logApiResponse;
+        this.embeddedJsonPatterns  = List.of();
+        this.openAiApiCaller       = openAiApiCaller;
+        this.omegaCodexLogger      = omegaCodexLogger;
     }
 
     ImmutableDoubleArray getEmbeddingVector( String input )
@@ -85,7 +93,7 @@ class EmbeddingApiService
 
         JsonNode responseNode = this.openAiApiCaller.getResponse(
                 this.taskName, this.apiEndpoint, requestNode, startMessage,
-                this.logApiSummary, this.logApiDetails,
+                this.logApiSummary, this.logApiRequest, this.logApiResponseHeaders, this.logApiResponse,
                 this.embeddedJsonPatterns, arraysToTrim );
 
         if ( this.logApiSummary )

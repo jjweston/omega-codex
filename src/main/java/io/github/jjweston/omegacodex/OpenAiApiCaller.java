@@ -50,6 +50,9 @@ class OpenAiApiCaller
     private final TaskRunner         taskRunner;
     private final ObjectMapper       objectMapper;
     private final ObjectMapper       yamlObjectMapper;
+    private final String             logDividerRequest;
+    private final String             logDividerResponseHeaders;
+    private final String             logDividerResponse;
 
     OpenAiApiCaller()
     {
@@ -77,16 +80,21 @@ class OpenAiApiCaller
         this.omegaCodexUtil     = omegaCodexUtil;
         this.omegaCodexLogger   = omegaCodexLogger;
         this.taskRunner         = taskRunner;
-        this.objectMapper       = new ObjectMapper();
-        this.yamlObjectMapper   = YAMLMapper.builder()
+
+        this.objectMapper     = new ObjectMapper();
+        this.yamlObjectMapper = YAMLMapper.builder()
                 .disable( YAMLWriteFeature.WRITE_DOC_START_MARKER )
                 .enable( YAMLWriteFeature.LITERAL_BLOCK_STYLE )
                 .enable( YAMLWriteFeature.SPLIT_LINES )
                 .build();
+
+        this.logDividerRequest         = "----- Request --------------------------------------------------------";
+        this.logDividerResponseHeaders = "----- Response Headers -----------------------------------------------";
+        this.logDividerResponse        = "----- Response -------------------------------------------------------";
     }
 
     JsonNode getResponse( String taskName, String apiEndpoint, ObjectNode requestNode, String startMessage,
-                          boolean logApiSummary, boolean logApiDetails,
+                          boolean logSummary, boolean logRequest, boolean logResponseHeaders, boolean logResponse,
                           List< Pattern > embeddedJsonPatterns, Map< String, Integer > arraysToTrim )
     {
         if ( taskName == null ) throw new IllegalArgumentException( "Task name must not be null." );
@@ -95,15 +103,16 @@ class OpenAiApiCaller
 
         String requestString = this.objectMapper.writeValueAsString( requestNode );
 
-        if ( logApiDetails )
+        if ( logRequest )
         {
-            String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString( this.prepareJsonForLogging(
-                    JsonPointer.compile( "/request" ), requestNode, embeddedJsonPatterns, arraysToTrim )).trim();
+            String debugRequestString = this.yamlObjectMapper.writer().writeValueAsString(
+                    this.prepareJsonForLogging(
+                            JsonPointer.compile( "/request" ),
+                            requestNode, embeddedJsonPatterns, arraysToTrim )).trim();
 
-            this.omegaCodexLogger.println( "-".repeat( 70 ));
-            this.omegaCodexLogger.println( "Request:" );
+            this.omegaCodexLogger.println( this.logDividerRequest );
             this.omegaCodexLogger.println( debugRequestString );
-            this.omegaCodexLogger.println( "-".repeat( 70 ));
+            this.omegaCodexLogger.println( this.logDividerRequest );
         }
 
         HttpRequest request = this.httpRequestBuilder.reset()
@@ -118,11 +127,21 @@ class OpenAiApiCaller
 
         for ( int attempt = 1; attempt <= this.maxAttempts; attempt++ )
         {
-            HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, logApiSummary,
+            HttpResponse< String > response = this.taskRunner.get( taskName, startMessage, logSummary,
                     () -> this.httpClient.send( request, HttpResponse.BodyHandlers.ofString() ));
 
             statusCode = response.statusCode();
             String responseString = response.body();
+
+            if ( logResponseHeaders )
+            {
+                String debugResponseHeadersString =
+                        this.yamlObjectMapper.writer().writeValueAsString( response.headers().map() ).trim();
+
+                this.omegaCodexLogger.println( this.logDividerResponseHeaders );
+                this.omegaCodexLogger.println( debugResponseHeadersString );
+                this.omegaCodexLogger.println( this.logDividerResponseHeaders );
+            }
 
             try { responseNode = this.objectMapper.readTree( responseString ); }
             catch ( JacksonException e )
@@ -132,17 +151,18 @@ class OpenAiApiCaller
                                 taskName, statusCode, responseString ), e );
             }
 
-            if ( logApiDetails )
+            if ( logResponse )
             {
                 String debugResponseString = this.yamlObjectMapper.writer().writeValueAsString(
-                        this.prepareJsonForLogging( JsonPointer.compile( "/response" ),
-                                                    responseNode, embeddedJsonPatterns, arraysToTrim )).trim();
+                        this.prepareJsonForLogging(
+                                JsonPointer.compile( "/response" ),
+                                responseNode, embeddedJsonPatterns, arraysToTrim )).trim();
 
-                this.omegaCodexLogger.println( "-".repeat( 70 ));
+                this.omegaCodexLogger.println( this.logDividerResponse );
                 this.omegaCodexLogger.println( "Status Code: " + statusCode );
                 this.omegaCodexLogger.println( "Response:" );
-                this.omegaCodexLogger.println( debugResponseString.trim() );
-                this.omegaCodexLogger.println( "-".repeat( 70 ));
+                this.omegaCodexLogger.println( debugResponseString );
+                this.omegaCodexLogger.println( this.logDividerResponse );
             }
 
             if ( statusCode != 429 ) break;
@@ -158,7 +178,7 @@ class OpenAiApiCaller
             float jitter = this.random.nextFloat() / 10 + 1.1f;
             long sleepDelay = (long) ( retryDelay * jitter );
 
-            if ( logApiSummary )
+            if ( logSummary )
             {
                 this.omegaCodexLogger.println( String.format(
                         "%s, Rate Limit Exceeded, Attempt: %,d, Retry Delay: %,d ms, Jitter: %.3f, Sleeping: %,d ms",

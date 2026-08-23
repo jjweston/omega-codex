@@ -50,7 +50,7 @@ class EmbeddingApiServiceTest
     {
         @SuppressWarnings( "DataFlowIssue" )
         IllegalArgumentException exception = assertThrowsExactly( IllegalArgumentException.class,
-                () -> new EmbeddingApiService( false, false, null, this.mockOmegaCodexLogger ));
+                () -> new EmbeddingApiService( false, false, false, false, null, this.mockOmegaCodexLogger ));
 
         assertEquals( "OpenAI API caller must not be null.", exception.getMessage() );
     }
@@ -58,8 +58,8 @@ class EmbeddingApiServiceTest
     @Test
     void testGetEmbeddingVector_nullInput()
     {
-        EmbeddingApiService embeddingApiService =
-                new EmbeddingApiService( false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
+        EmbeddingApiService embeddingApiService = new EmbeddingApiService(
+                false, false, false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> embeddingApiService.getEmbeddingVector( null ));
@@ -70,8 +70,8 @@ class EmbeddingApiServiceTest
     @Test
     void testGetEmbeddingVector_emptyInput()
     {
-        EmbeddingApiService embeddingApiService =
-                new EmbeddingApiService( false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
+        EmbeddingApiService embeddingApiService = new EmbeddingApiService(
+                false, false, false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         IllegalArgumentException exception = assertThrowsExactly(
                 IllegalArgumentException.class, () -> embeddingApiService.getEmbeddingVector( "" ));
@@ -82,8 +82,8 @@ class EmbeddingApiServiceTest
     @Test
     void testGetEmbeddingVector_longInput()
     {
-        EmbeddingApiService embeddingApiService =
-                new EmbeddingApiService( false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
+        EmbeddingApiService embeddingApiService = new EmbeddingApiService(
+                false, false, false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         String input = "a".repeat( 32_768 );
 
@@ -119,12 +119,13 @@ class EmbeddingApiServiceTest
         JsonNode responseNode = objectMapper.readTree( responseString );
 
         when( this.mockOpenAiApiCaller
-                .getResponse( any(), any(), this.requestNodeCaptor.capture(),
-                              this.startMessageCaptor.capture(), anyBoolean(), anyBoolean(), any(), any() ))
+                .getResponse(
+                        any(), any(), this.requestNodeCaptor.capture(), this.startMessageCaptor.capture(),
+                        anyBoolean(), anyBoolean(), anyBoolean(), anyBoolean(), any(), any() ))
                 .thenReturn( responseNode );
 
-        EmbeddingApiService embeddingApiService =
-                new EmbeddingApiService( true, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
+        EmbeddingApiService embeddingApiService = new EmbeddingApiService(
+                true, false, false, false, this.mockOpenAiApiCaller, this.mockOmegaCodexLogger );
 
         ImmutableDoubleArray actualVector = embeddingApiService.getEmbeddingVector( expectedInput );
 
