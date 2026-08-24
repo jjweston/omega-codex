@@ -44,7 +44,6 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -52,7 +51,6 @@ import static org.mockito.Mockito.when;
 @ExtendWith( MockitoExtension.class )
 class OpenAIApiCallerTest
 {
-    private final int        testMaxAttempts   = 5;
     private final String     testTaskName      = "OpenAIApiCallerTest";
     private final String     testApiEndpoint   = "https://example.org/v1/test";
     private final String     testApiKeyVarName = "OMEGACODEX_TEST_API_KEY";
@@ -191,7 +189,7 @@ class OpenAIApiCallerTest
         OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
-                        false, false, false, false, List.of(), Map.of() ));
+                        true, false, false, false, List.of(), Map.of() ));
 
         String expectedMessage =
                 "OpenAIApiCallerTest, Error Returned, Status Code: 429, " +
@@ -199,8 +197,21 @@ class OpenAIApiCallerTest
 
         assertEquals( expectedMessage, exception.getMessage() );
 
-        verify( this.mockOmegaCodexUtil_OpenAiApiCaller, times( this.testMaxAttempts - 1 )).sleepThread( 23_000 );
-        verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger, this.mockOmegaCodexUtil_OpenAiApiCaller );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Rate Limit Exceeded, " +
+                "Attempt: 1, Raw Retry Delay: 20,000 ms, Retry Delay: 20,000 ms, Jitter: 1.150, Sleeping: 23,000 ms" );
+        inOrder.verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 23_000 );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Rate Limit Exceeded, " +
+                "Attempt: 2, Raw Retry Delay: 20,000 ms, Retry Delay: 23,000 ms, Jitter: 2.000, Sleeping: 46,000 ms" );
+        inOrder.verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 46_000 );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting" );
+        inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
+        inOrder.verifyNoMoreInteractions();
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger, this.mockOmegaCodexUtil_OpenAiApiCaller );
     }
 
     @Test
@@ -267,18 +278,16 @@ class OpenAIApiCallerTest
 
         assertEquals( expectedResponseNode, actualResponseNode );
 
-        InOrder inOrder = inOrder( this.mockOmegaCodexLogger );
+        InOrder inOrder = inOrder( this.mockOmegaCodexLogger, this.mockOmegaCodexUtil_OpenAiApiCaller );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Rate Limit Exceeded, " +
                 "Attempt: 1, Raw Retry Delay: 5,000 ms, Retry Delay: 10,000 ms, Jitter: 1.175, Sleeping: 11,750 ms" );
+        inOrder.verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 11_750 );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Starting, Start Message" );
         inOrder.verify( this.mockOmegaCodexLogger ).println( "OpenAIApiCallerTest, Complete, Duration: 0 ms" );
         inOrder.verifyNoMoreInteractions();
-        verifyNoMoreInteractions( this.mockOmegaCodexLogger );
-
-        verify( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 11_750 );
-        verifyNoMoreInteractions( this.mockOmegaCodexUtil_OpenAiApiCaller );
+        verifyNoMoreInteractions( this.mockOmegaCodexLogger, this.mockOmegaCodexUtil_OpenAiApiCaller );
     }
 
     @Test
@@ -390,11 +399,13 @@ class OpenAIApiCallerTest
 
     private OpenAiApiCaller createOpenAiApiCaller()
     {
+        int  testMaxAttempts       = 3;
         long testMinimumRetryDelay = 10_000;
+
         TaskRunner testTaskRunner = new TaskRunner( 0, this.mockOmegaCodexUtil_TaskRunner, this.mockOmegaCodexLogger );
 
         return new OpenAiApiCaller(
-                this.testMaxAttempts, testMinimumRetryDelay, this.testApiKeyVarName, this.mockEnvironment,
+                testMaxAttempts, testMinimumRetryDelay, this.testApiKeyVarName, this.mockEnvironment,
                 this.mockHttpRequestBuilder, this.mockHttpClient, this.mockRandom,
                 this.mockOmegaCodexUtil_OpenAiApiCaller, this.mockOmegaCodexLogger, testTaskRunner );
     }

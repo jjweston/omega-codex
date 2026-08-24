@@ -57,7 +57,7 @@ class OpenAiApiCaller
 
     OpenAiApiCaller()
     {
-        this( 5,
+        this( 10,
               10_000,
               "OMEGACODEX_OPENAI_API_KEY",
               new Environment(),
@@ -125,8 +125,9 @@ class OpenAiApiCaller
                 .POST( requestString )
                 .build();
 
-        int statusCode = 0;
-        JsonNode responseNode = JsonNodeFactory.instance.objectNode();
+        long     previousRetryDelay = 0;
+        int      statusCode         = 0;
+        JsonNode responseNode       = JsonNodeFactory.instance.objectNode();
 
         for ( int attempt = 1; attempt <= this.maxAttempts; attempt++ )
         {
@@ -179,8 +180,10 @@ class OpenAiApiCaller
             if ( attempt == this.maxAttempts ) break;
 
             long retryDelay = Math.max( rawRetryDelay, this.minimumRetryDelay );
-            float jitter = this.random.nextFloat() / 10 + 1.1f;
+            if ( attempt > 1 ) retryDelay = Math.max( retryDelay, previousRetryDelay );
+            float jitter = attempt == 1 ? this.random.nextFloat() / 10 + 1.1f : this.random.nextFloat() + 1.5f;
             long sleepDelay = (long) ( retryDelay * jitter );
+            previousRetryDelay = sleepDelay;
 
             if ( logSummary )
             {
