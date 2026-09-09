@@ -52,7 +52,7 @@ class SplitTextFile
 
         String content;
         try { content = Files.readString( path ); }
-        catch ( IOException e ) { throw new OmegaCodexException( "Exception reading file: " + path, e ); }
+        catch ( IOException e ) { throw new RuntimeException( "Exception reading file: " + path, e ); }
 
         List< StringSegment > segments = SplitTextFile.textSplitter.getSegments( content );
         SplitTextFile.printSegments( segments );

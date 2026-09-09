@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ class ThreadedReader implements AutoCloseable
             catch ( Exception e ) { this.exception = e; }
         } );
 
-        thread.start();
+        this.thread.start();
     }
 
     void join()
@@ -69,7 +69,7 @@ class ThreadedReader implements AutoCloseable
         catch ( InterruptedException e )
         {
             Thread.currentThread().interrupt();
-            throw new OmegaCodexException( e );
+            throw new RuntimeException( e );
         }
     }
 
@@ -82,6 +82,6 @@ class ThreadedReader implements AutoCloseable
     Exception getException()
     {
         if ( this.thread != null ) throw new IllegalStateException( "Thread is currently running." );
-        return exception;
+        return this.exception;
     }
 }

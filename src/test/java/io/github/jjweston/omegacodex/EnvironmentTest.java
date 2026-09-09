@@ -57,8 +57,8 @@ class EnvironmentTest
         String name = "test";
         String message = "Missing required environment variable. Name: " + name;
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.environment.getString( name ));
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () -> this.environment.getString( name ));
 
         assertEquals( message, exception.getMessage() );
     }
@@ -83,8 +83,8 @@ class EnvironmentTest
 
         when( this.mockDotenv.get( name )).thenReturn( value );
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.environment.getInt( name ));
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () -> this.environment.getInt( name ));
 
         assertEquals( message, exception.getMessage() );
     }

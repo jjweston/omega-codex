@@ -48,7 +48,7 @@ class Query
 
             Query.queryLoop( responseApiService );
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to close database connection.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to close database connection.", e ); }
     }
 
     private static void queryLoop( ResponseApiService responseApiService )
@@ -66,7 +66,7 @@ class Query
 
             String query;
             try { query = reader.readLine(); }
-            catch ( IOException e ) { throw new OmegaCodexException( "Failed to read query.", e ); }
+            catch ( IOException e ) { throw new RuntimeException( "Failed to read query.", e ); }
             System.out.println();
 
             if ( query == null ) break;

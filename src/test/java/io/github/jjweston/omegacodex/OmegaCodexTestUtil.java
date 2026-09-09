@@ -36,7 +36,7 @@ class OmegaCodexTestUtil
         if ( inputStream == null ) throw new IllegalArgumentException( "Input stream must not be null." );
 
         try { return new String( inputStream.readAllBytes() ); }
-        catch ( IOException e ) { throw new OmegaCodexException( "Failed to read from input stream.", e ); }
+        catch ( IOException e ) { throw new RuntimeException( "Failed to read from input stream.", e ); }
     }
 
     static Path copyResource(String resourceName, Path destination ) throws IOException

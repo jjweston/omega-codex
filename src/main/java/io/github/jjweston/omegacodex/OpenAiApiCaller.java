@@ -150,7 +150,7 @@ class OpenAiApiCaller
             try { responseNode = this.objectMapper.readTree( responseString ); }
             catch ( JacksonException e )
             {
-                throw new OmegaCodexException(
+                throw new RuntimeException(
                         String.format( "%s, Failed to deserialize response. Status Code: %d, Response:%n%s",
                                 taskName, statusCode, responseString ), e );
             }
@@ -197,7 +197,7 @@ class OpenAiApiCaller
             catch ( InterruptedException e )
             {
                 this.omegaCodexUtil.interruptThread();
-                throw new OmegaCodexException( taskName + ", Retry Sleep Interrupted", e );
+                throw new RuntimeException( taskName + ", Retry Sleep Interrupted", e );
             }
         }
 
@@ -206,7 +206,7 @@ class OpenAiApiCaller
             String errorMessage = responseNode.path( "error" ).path( "message" ).asString();
             String exceptionMessage = taskName + ", Error Returned, Status Code: " + statusCode;
             if ( !errorMessage.isEmpty() ) exceptionMessage += ", Error Message: " + errorMessage;
-            throw new OmegaCodexException( exceptionMessage );
+            throw new RuntimeException( exceptionMessage );
         }
 
         return responseNode;

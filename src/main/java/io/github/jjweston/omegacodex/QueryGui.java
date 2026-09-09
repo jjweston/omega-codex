@@ -62,31 +62,31 @@ public class QueryGui extends Application
         this.responseApiService = new ResponseApiService(
                 embeddingCacheService, embeddingService, this.qdrantService, openAiApiCaller );
 
-        MarkdownLoader markdownLoader = new MarkdownLoader( embeddingService, qdrantService );
+        MarkdownLoader markdownLoader = new MarkdownLoader( embeddingService, this.qdrantService );
         markdownLoader.load( Paths.get( "readme.md" ));
     }
 
     public void stop()
     {
-        List< OmegaCodexException > exceptions = new LinkedList<>();
+        List< RuntimeException > exceptions = new LinkedList<>();
 
         try { this.connection.close(); }
         catch ( Exception e )
         {
-            exceptions.add( new OmegaCodexException( "Exception occurred while closing database connection.", e ));
+            exceptions.add( new RuntimeException( "Exception occurred while closing database connection.", e ));
         }
 
         try { this.qdrantService.close(); }
         catch ( Exception e )
         {
-            exceptions.add( new OmegaCodexException( "Exception occurred while closing Qdrant service.", e ));
+            exceptions.add( new RuntimeException( "Exception occurred while closing Qdrant service.", e ));
         }
 
         if ( !exceptions.isEmpty() )
         {
             if ( exceptions.size() == 1 ) throw exceptions.getFirst();
 
-            OmegaCodexException exception = new OmegaCodexException( "Exceptions occurred while stopping." );
+            RuntimeException exception = new RuntimeException( "Exceptions occurred while stopping." );
             for ( Exception e : exceptions ) exception.addSuppressed( e );
             throw exception;
         }
@@ -96,7 +96,7 @@ public class QueryGui extends Application
     {
         this.conversationBox = new VBox();
 
-        this.scrollPane = new ScrollPane( conversationBox );
+        this.scrollPane = new ScrollPane( this.conversationBox );
         this.scrollPane.setFitToWidth( true );
 
         this.inputArea = new TextArea();

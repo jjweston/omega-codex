@@ -120,7 +120,7 @@ class OpenAIApiCallerTest
         this.mockApiCall( response, 429 );
         when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, false, false, List.of(), Map.of() ));
@@ -151,7 +151,7 @@ class OpenAIApiCallerTest
         when( this.mockHttpResponse.headers() ).thenReturn( this.mockHttpHeaders );
         when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( -5 ));
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, false, false, List.of(), Map.of() ));
@@ -186,7 +186,7 @@ class OpenAIApiCallerTest
         when( this.mockHttpHeaders.firstValueAsLong( "retry-after-ms" )).thenReturn( OptionalLong.of( 20_000 ));
         when( this.mockRandom.nextFloat() ).thenReturn( 0.5f );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         true, false, false, false, List.of(), Map.of() ));
@@ -238,7 +238,7 @@ class OpenAIApiCallerTest
         when( this.mockRandom.nextFloat() ).thenReturn( 0.25f );
         doThrow( interruptedException ).when( this.mockOmegaCodexUtil_OpenAiApiCaller ).sleepThread( 33_750 );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, false, false, List.of(), Map.of() ));
@@ -301,7 +301,7 @@ class OpenAIApiCallerTest
 
         this.mockApiCall( response, 500 );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, false, false, List.of(),  Map.of() ));
@@ -327,7 +327,7 @@ class OpenAIApiCallerTest
 
         this.mockApiCall( response, 401 );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, false, false, List.of(), Map.of() ));
@@ -345,7 +345,7 @@ class OpenAIApiCallerTest
 
         this.mockApiCall( response, 402 );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.createOpenAiApiCaller().getResponse(
                         this.testTaskName, this.testApiEndpoint, this.testRequestNode, null,
                         false, false, false, false, List.of(), Map.of() ));

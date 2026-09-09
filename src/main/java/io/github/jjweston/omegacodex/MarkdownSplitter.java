@@ -67,46 +67,46 @@ class MarkdownSplitter
 
         Process process;
         try { process = processBuilder.start(); }
-        catch ( IOException e ) { throw new OmegaCodexException( "IOException starting Python process.", e ); }
+        catch ( IOException e ) { throw new RuntimeException( "IOException starting Python process.", e ); }
 
         int exitCode;
-        try ( stdoutReader; stderrReader )
+        try ( this.stdoutReader; this.stderrReader )
         {
-            stdoutReader.start( process.inputReader() );
-            stderrReader.start( process.errorReader() );
+            this.stdoutReader.start( process.inputReader() );
+            this.stderrReader.start( process.errorReader() );
 
             try { exitCode = process.waitFor(); }
             catch ( InterruptedException e )
             {
                 Thread.currentThread().interrupt();
-                throw new OmegaCodexException( e );
+                throw new RuntimeException( e );
             }
 
-            stdoutReader.join();
-            stderrReader.join();
+            this.stdoutReader.join();
+            this.stderrReader.join();
         }
 
-        List< OmegaCodexException > exceptions = new LinkedList<>();
-        Exception stdoutException = stdoutReader.getException();
-        Exception stderrException = stderrReader.getException();
+        List< RuntimeException > exceptions = new LinkedList<>();
+        Exception stdoutException = this.stdoutReader.getException();
+        Exception stderrException = this.stderrReader.getException();
 
         if ( stdoutException != null )
         {
             exceptions.add(
-                    new OmegaCodexException( "Exception occurred while reading standard output.", stdoutException ));
+                    new RuntimeException( "Exception occurred while reading standard output.", stdoutException ));
         }
 
         if ( stderrException != null )
         {
             exceptions.add(
-                    new OmegaCodexException( "Exception occurred while reading standard error.", stderrException ));
+                    new RuntimeException( "Exception occurred while reading standard error.", stderrException ));
         }
 
         if ( !exceptions.isEmpty() )
         {
             if ( exceptions.size() == 1 ) throw exceptions.getFirst();
 
-            OmegaCodexException exception = new OmegaCodexException( "Exceptions occurred while running Python." );
+            RuntimeException exception = new RuntimeException( "Exceptions occurred while running Python." );
             for ( Exception e : exceptions ) exception.addSuppressed( e );
             throw exception;
         }
@@ -114,22 +114,22 @@ class MarkdownSplitter
         if ( exitCode != 0 )
         {
             StringBuilder exceptionMessage = new StringBuilder( "Error returned from Python. Exit Code: " + exitCode );
-            for ( String line : stderrReader.getLines() )
+            for ( String line : this.stderrReader.getLines() )
             {
                 exceptionMessage.append( "\n" );
                 exceptionMessage.append( "Message: " );
                 exceptionMessage.append( line );
             }
-            throw new OmegaCodexException( exceptionMessage.toString() );
+            throw new RuntimeException( exceptionMessage.toString() );
         }
 
-        String responseString = String.join( "\n", stdoutReader.getLines() );
+        String responseString = String.join( "\n", this.stdoutReader.getLines() );
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode responseNode;
         try { responseNode = objectMapper.readTree( responseString ); }
         catch ( JacksonException e )
         {
-            throw new OmegaCodexException( String.format( "Failed to deserialize response:%n%s", responseString ), e );
+            throw new RuntimeException( String.format( "Failed to deserialize response:%n%s", responseString ), e );
         }
 
         List< String > chunks = new LinkedList<>();
