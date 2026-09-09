@@ -102,7 +102,7 @@ class QdrantService implements AutoCloseable
         List< Points.ScoredPoint > points = this.taskRunner.get(
                 taskName, this.logSummary,
                 () -> this.qdrantClient.queryAsync( query ).get() );
-        if ( points == null ) throw new OmegaCodexException( taskName + ", Null Returned" );
+        if ( points == null ) throw new RuntimeException( taskName + ", Null Returned" );
 
         return points.stream().map( point -> new SearchResult( point.getId().getNum(), point.getScore() )).toList();
     }
@@ -120,7 +120,7 @@ class QdrantService implements AutoCloseable
         Boolean exists = this.taskRunner.get(
                 taskName, this.logSummary,
                 () -> this.qdrantClient.collectionExistsAsync( this.collectionName ).get() );
-        if ( exists == null ) throw new OmegaCodexException( taskName + ", Null Returned" );
+        if ( exists == null ) throw new RuntimeException( taskName + ", Null Returned" );
         return exists;
     }
 

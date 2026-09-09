@@ -89,8 +89,8 @@ class MarkdownSplitterTest
 
         this.mockProcess( exitCode, null, null, null, stderr );
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         String expectedMessage =
                 """
@@ -109,8 +109,8 @@ class MarkdownSplitterTest
 
         this.mockProcess( 0, stdoutException, null, null, null );
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         assertEquals( "Exception occurred while reading standard output.", exception.getMessage() );
         assertEquals( stdoutException, exception.getCause() );
@@ -123,8 +123,8 @@ class MarkdownSplitterTest
 
         this.mockProcess( 0, null, stderrException, null, null );
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         assertEquals( "Exception occurred while reading standard error.", exception.getMessage() );
         assertEquals( stderrException, exception.getCause() );
@@ -138,19 +138,19 @@ class MarkdownSplitterTest
 
         this.mockProcess( 0, stdoutException, stderrException, null, null );
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () -> this.markdownSplitter.split( this.mockPath ));
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () -> this.markdownSplitter.split( this.mockPath ));
 
         assertEquals( "Exceptions occurred while running Python.", exception.getMessage() );
 
         Throwable[] suppressedExceptions = exception.getSuppressed();
         assertEquals( 2, suppressedExceptions.length );
 
-        assertEquals( OmegaCodexException.class, suppressedExceptions[ 0 ].getClass() );
+        assertEquals( RuntimeException.class, suppressedExceptions[ 0 ].getClass() );
         assertEquals( "Exception occurred while reading standard output.", suppressedExceptions[ 0 ].getMessage() );
         assertEquals( stdoutException, suppressedExceptions[ 0 ].getCause() );
 
-        assertEquals( OmegaCodexException.class, suppressedExceptions[ 1 ].getClass() );
+        assertEquals( RuntimeException.class, suppressedExceptions[ 1 ].getClass() );
         assertEquals( "Exception occurred while reading standard error.", suppressedExceptions[ 1 ].getMessage() );
         assertEquals( stderrException, suppressedExceptions[ 1 ].getCause() );
     }
@@ -174,7 +174,7 @@ class MarkdownSplitterTest
 
         this.mockProcess( 0, null, null, stdout, null );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.markdownSplitter.split( this.mockPath ));
 
         String expectedMessage =
@@ -296,7 +296,7 @@ class MarkdownSplitterTest
     {
         when( this.mockPath.toFile() ).thenReturn( this.mockFile );
         when( this.mockFile.exists() ).thenReturn( true );
-        when( this.mockProcessBuilderFactory.create( any( String[].class ))).thenReturn( mockProcessBuilder );
+        when( this.mockProcessBuilderFactory.create( any( String[].class ))).thenReturn( this.mockProcessBuilder );
         when( this.mockProcessBuilder.start() ).thenReturn( this.mockProcess );
         when( this.mockProcess.waitFor() ).thenReturn( exitCode );
         when( this.mockStdoutReader.getException() ).thenReturn( stdoutException );

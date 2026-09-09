@@ -189,7 +189,7 @@ class EmbeddingCacheServiceTest
         when( this.mockPreparedStatement.executeQuery() ).thenReturn( this.mockResultSet );
         when( this.mockResultSet.next() ).thenReturn( false );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> embeddingCacheService.getInput( 1_234 ));
 
         assertEquals( "Unable to find embedding with id: 1,234", exception.getMessage() );

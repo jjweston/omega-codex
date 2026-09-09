@@ -71,8 +71,8 @@ class QdrantServiceTest
                 .thenReturn( this.mockBooleanListenableFuture );
         doThrow( closeException ).when( this.mockQdrantClient ).close();
 
-        OmegaCodexException exception = assertThrowsExactly(
-                OmegaCodexException.class, () ->
+        RuntimeException exception = assertThrowsExactly(
+                RuntimeException.class, () ->
                 {
                     try ( QdrantService qdrantService = this.createQdrantService( this.testCollectionSize, false ))
                     {

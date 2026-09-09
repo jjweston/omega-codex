@@ -67,7 +67,7 @@ class EmbeddingCacheService
                 return new Embedding( id, new ImmutableDoubleArray( vectorString ));
             }
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get embedding.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to get embedding.", e ); }
 
         return null;
     }
@@ -105,9 +105,9 @@ class EmbeddingCacheService
 
                 return id;
             }
-            else throw new OmegaCodexException( "Failed to get ID of added embedding." );
+            else throw new RuntimeException( "Failed to get ID of added embedding." );
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to insert into Embeddings table.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to insert into Embeddings table.", e ); }
     }
 
     String getInput( long id )
@@ -121,9 +121,9 @@ class EmbeddingCacheService
 
             if ( result.next() ) return result.getString( "Input" );
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get input.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to get input.", e ); }
 
-        throw new OmegaCodexException( String.format( "Unable to find embedding with id: %,d", id ));
+        throw new RuntimeException( String.format( "Unable to find embedding with id: %,d", id ));
     }
 
     private void init()
@@ -141,6 +141,6 @@ class EmbeddingCacheService
                     """ );
             statement.execute();
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to create Embeddings table.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to create Embeddings table.", e ); }
     }
 }

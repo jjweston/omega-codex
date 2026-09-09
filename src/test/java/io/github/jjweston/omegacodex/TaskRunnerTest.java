@@ -81,7 +81,7 @@ class TaskRunnerTest
     {
         String taskName = "get_interruptedException";
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.taskRunner.get( taskName, false, () -> { throw new InterruptedException(); } ));
 
         assertEquals( taskName + ", Task Interrupted", exception.getMessage() );
@@ -94,8 +94,8 @@ class TaskRunnerTest
         String taskName = "get_omegaCodexException";
         String message = "Test Message";
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
-                () -> this.taskRunner.get( taskName, false, () -> { throw new OmegaCodexException( message ); } ));
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
+                () -> this.taskRunner.get( taskName, false, () -> { throw new RuntimeException( message ); } ));
 
         assertEquals( message, exception.getMessage() );
     }
@@ -106,7 +106,7 @@ class TaskRunnerTest
         String taskName = "get_exception";
         Exception innerException = new Exception( "Inner Exception" );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.taskRunner.get( taskName, false, () -> { throw innerException; } ));
 
         assertEquals( taskName + ", Exception Occurred", exception.getMessage() );
@@ -135,7 +135,7 @@ class TaskRunnerTest
         assertEquals( 43, this.taskRunner.get( taskName, "",              true, () -> 43 ));
         assertEquals( 44, this.taskRunner.get( taskName, "Start Message", true, () -> 44 ));
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> this.taskRunner.get( taskName, true, () -> null ));
 
         assertEquals( taskName + ", Sleep Interrupted", exception.getMessage() );

@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ class Environment
         String result = this.dotenv.get( name );
         if ( result == null )
         {
-            throw new OmegaCodexException( "Missing required environment variable. Name: " + name );
+            throw new RuntimeException( "Missing required environment variable. Name: " + name );
         }
 
         return result;
@@ -55,7 +55,7 @@ class Environment
         catch ( NumberFormatException e )
         {
             String message = "Cannot convert environment variable to integer. Name: " + name + ", Value: " + value;
-            throw new OmegaCodexException( message, e );
+            throw new RuntimeException( message, e );
         }
     }
 }

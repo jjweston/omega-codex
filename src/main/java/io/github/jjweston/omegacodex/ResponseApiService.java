@@ -191,7 +191,7 @@ class ResponseApiService
         {
             if ( ++iterationCount > this.iterationLimit )
             {
-                throw new OmegaCodexException( String.format(
+                throw new RuntimeException( String.format(
                         "Failed to get response within %,d iterations.", this.iterationLimit ));
             }
 
@@ -252,14 +252,14 @@ class ResponseApiService
 
             if ( !messageNode.path( "role" ).asString().equals( "assistant" ))
             {
-                throw new OmegaCodexException( String.format(
+                throw new RuntimeException( String.format(
                         "Found response message from unexpected role:%n%s",
                         outputNode.toPrettyString() ));
             }
 
             if ( responseMessage != null )
             {
-                throw new OmegaCodexException( String.format(
+                throw new RuntimeException( String.format(
                         "Found more than one response message:%n%s",
                         outputNode.toPrettyString() ));
             }
@@ -268,7 +268,7 @@ class ResponseApiService
 
             if ( contentNode.size() != 1 )
             {
-                throw new OmegaCodexException( String.format(
+                throw new RuntimeException( String.format(
                         "Expected 1 content element, but received %,d:%n%s",
                         contentNode.size(), outputNode.toPrettyString() ));
             }
@@ -278,14 +278,14 @@ class ResponseApiService
 
         if (( responseMessage == null ) && ( !functionCalled ))
         {
-            throw new OmegaCodexException( String.format(
+            throw new RuntimeException( String.format(
                     "Failed to find response message or function call:%n%s",
                     outputNode.toPrettyString() ));
         }
 
         if (( responseMessage != null ) && ( functionCalled ))
         {
-            throw new OmegaCodexException( String.format(
+            throw new RuntimeException( String.format(
                     "Received response message with function call:%n%s",
                     outputNode.toPrettyString() ));
         }
@@ -304,7 +304,7 @@ class ResponseApiService
         try { argumentsNode = this.objectMapper.readTree( argumentsString ); }
         catch ( JacksonException e )
         {
-            throw new OmegaCodexException( String.format(
+            throw new RuntimeException( String.format(
                     "Failed to deserialize arguments:%n%s", argumentsString ), e );
         }
 
@@ -312,7 +312,7 @@ class ResponseApiService
 
         if ( output == null )
         {
-            throw new OmegaCodexException( String.format(
+            throw new RuntimeException( String.format(
                     "Unrecognized function:%n%s",
                     functionCallNode.toPrettyString() ));
         }

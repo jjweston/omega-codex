@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class SQLiteConnectionFactory
     Connection create()
     {
         try { Files.createDirectories( this.workDirectory ); }
-        catch ( IOException e ) { throw new OmegaCodexException( "Failed to create work directory.", e ); }
+        catch ( IOException e ) { throw new RuntimeException( "Failed to create work directory.", e ); }
 
         Path databasePath = this.workDirectory.resolve( this.databaseFile );
         String databaseUrl = "jdbc:sqlite:" + databasePath;
@@ -45,6 +45,6 @@ class SQLiteConnectionFactory
         dataSource.setUrl( databaseUrl );
 
         try { return dataSource.getConnection(); }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to get database connection.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to get database connection.", e ); }
     }
 }

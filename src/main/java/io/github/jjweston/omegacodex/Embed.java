@@ -1,6 +1,6 @@
 /*
 
-Copyright 2025 Jeffrey J. Weston <jjweston@gmail.com>
+Copyright 2025-2026 Jeffrey J. Weston <jjweston@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53,6 +53,6 @@ class Embed
             EmbeddingService embeddingService = new EmbeddingService( embeddingCacheService, embeddingApiService );
             return embeddingService.getEmbedding( input ).vector();
         }
-        catch ( SQLException e ) { throw new OmegaCodexException( "Failed to close database connection.", e ); }
+        catch ( SQLException e ) { throw new RuntimeException( "Failed to close database connection.", e ); }
     }
 }

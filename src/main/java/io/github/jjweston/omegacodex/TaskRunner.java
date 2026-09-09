@@ -63,14 +63,15 @@ class TaskRunner
             {
                 if ( logTaskSummary )
                 {
-                    this.omegaCodexLogger.println( String.format( taskName + ", Sleeping, Duration: %,d ms", delayMs ));
+                    this.omegaCodexLogger.println(
+                            String.format( "%s, Sleeping, Duration: %,d ms", taskName, delayMs ));
                 }
 
                 try { this.omegaCodexUtil.sleepThread( delayMs ); }
                 catch ( InterruptedException e )
                 {
                     this.omegaCodexUtil.interruptThread();
-                    throw new OmegaCodexException( taskName + ", Sleep Interrupted", e );
+                    throw new RuntimeException( taskName + ", Sleep Interrupted", e );
                 }
             }
         }
@@ -91,17 +92,17 @@ class TaskRunner
         catch ( InterruptedException e )
         {
             this.omegaCodexUtil.interruptThread();
-            throw new OmegaCodexException( taskName + ", Task Interrupted", e );
+            throw new RuntimeException( taskName + ", Task Interrupted", e );
         }
-        catch ( OmegaCodexException e ) { throw e; }
-        catch ( Exception e ) { throw new OmegaCodexException( taskName + ", Exception Occurred", e ); }
+        catch ( RuntimeException e ) { throw e; }
+        catch ( Exception e ) { throw new RuntimeException( taskName + ", Exception Occurred", e ); }
 
         long stopTime = this.omegaCodexUtil.nanoTime();
         long deltaMs = ( stopTime - startTime ) / 1_000_000;
 
         if ( logTaskSummary )
         {
-            this.omegaCodexLogger.println( String.format( taskName + ", Complete, Duration: %,d ms", deltaMs ));
+            this.omegaCodexLogger.println( String.format( "%s, Complete, Duration: %,d ms", taskName, deltaMs ));
         }
 
         return result;

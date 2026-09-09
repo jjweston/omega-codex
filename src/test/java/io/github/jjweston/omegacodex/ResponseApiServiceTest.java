@@ -172,7 +172,7 @@ class ResponseApiServiceTest
         when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
         when( this.mockEmbeddingCacheService.getInput( searchResult.id() )).thenReturn( testSearchResult );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( userQuery ));
 
         assertEquals( "Failed to get response within 1,024 iterations.", exception.getMessage() );
@@ -429,7 +429,7 @@ class ResponseApiServiceTest
                         any(), any() ))
                 .thenReturn( responseNode );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
@@ -500,7 +500,7 @@ class ResponseApiServiceTest
         when( this.mockQdrantService.search( queryVector )).thenReturn( searchResults );
         when( this.mockEmbeddingCacheService.getInput( searchResult.id() )).thenReturn( testSearchResult );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
@@ -555,7 +555,7 @@ class ResponseApiServiceTest
                         any(), any() ))
                 .thenReturn( responseNode );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
@@ -620,7 +620,7 @@ class ResponseApiServiceTest
                         any(), any() ))
                 .thenReturn( responseNode );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
@@ -673,7 +673,7 @@ class ResponseApiServiceTest
                         any(), any() ))
                 .thenReturn( responseNode );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
@@ -724,7 +724,7 @@ class ResponseApiServiceTest
                         any(), any() ))
                 .thenReturn( responseNode );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
@@ -775,7 +775,7 @@ class ResponseApiServiceTest
                         any(), any() ))
                 .thenReturn( responseNode );
 
-        OmegaCodexException exception = assertThrowsExactly( OmegaCodexException.class,
+        RuntimeException exception = assertThrowsExactly( RuntimeException.class,
                 () -> responseApiService.getResponse( queryString ));
 
         String expectedMessage =
