@@ -1,20 +1,15 @@
-# Omega Codex
+# Omegizent
 
-Omega Codex is an AI-powered assistant that helps you explore, understand, and develop software projects.
-It aims to support software developers by
-automating tedious tasks,
-answering project-specific questions, and
-contributing meaningfully to the development process,
-all while integrating tightly with version control and issue tracking platforms like GitHub.
+AI-powered assistant that helps you explore, understand, and develop software projects.
 
 ## Early Development
 
 > [!WARNING]
-> Omega Codex is in early development and should be considered a prototype or proof of concept.
+> Omegizent is in early development and should be considered a prototype or proof of concept.
 > It is not yet ready for general use.
 > Expect incomplete features, experimental ideas, and frequent iteration.
 
-The current early development goal for Omega Codex is to develop a minimal functional implementation
+The current early development goal for Omegizent is to develop a minimal functional implementation
 that is able to ingest basic information about a GitHub project into a vectorized knowledge base,
 allow a user to make a query about the project,
 use retrieval-augmented generation to send the user’s query
@@ -23,27 +18,27 @@ and display the ChatGPT API response to the user.
 
 ## Development Process
 
-Although Omega Codex is currently a one-person project,
+Although Omegizent is currently a one-person project,
 it is being developed using a collaborative, team-oriented workflow.
 Each feature or idea is tracked as a GitHub issue,
 and changes are implemented through topic branches and pull requests.
 This workflow has been intentionally chosen to:
 
-- Generate realistic issue and pull request data that Omega Codex will eventually analyze and learn from.
-- Simulate real-world team collaboration, enabling more robust development and testing of Omega Codex's capabilities.
-- Explore and validate how Omega Codex can be used in complex projects with structured workflows.
+- Generate realistic issue and pull request data that Omegizent will eventually analyze and learn from.
+- Simulate real-world team collaboration, enabling more robust development and testing of Omegizent's capabilities.
+- Explore and validate how Omegizent can be used in complex projects with structured workflows.
 
 ## Prerequisites
 
-Omega Codex is primarily written in Java but also uses Python for some tasks.
+Omegizent is primarily written in Java but also uses Python for some tasks.
 It also uses the OpenAI API and Qdrant.
 
 ### Java
 
-You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build and run Omega Codex.
+You need a Java JDK and [Apache Maven](https://maven.apache.org/) to build and run Omegizent.
 We use the [Eclipse Temurin](https://adoptium.net/temurin/) Java JDK, but other JDKs may also work.
 
-Omega Codex is tested with the following versions, but other versions may also work:
+Omegizent is tested with the following versions, but other versions may also work:
 
 - Eclipse Temurin:
   - `25.0.4+7-LTS` (Windows x64)
@@ -52,16 +47,16 @@ Omega Codex is tested with the following versions, but other versions may also w
 
 ### Python
 
-You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.org/) to run Omega Codex.
+You need [Python](https://www.python.org/) and [Poetry](https://python-poetry.org/) to run Omegizent.
 
-Omega Codex is tested with the following versions, but other versions may also work:
+Omegizent is tested with the following versions, but other versions may also work:
 
 - Python:
   - `3.14.7`
 - Poetry:
   - `2.4.1`
 
-Ensure that your Python dependencies are installed and updated before running Omega Codex.
+Ensure that your Python dependencies are installed and updated before running Omegizent.
 Run the following in the `python-tools` directory:
 
 ```bash
@@ -70,7 +65,7 @@ poetry sync
 
 ### OpenAI API
 
-You need an [OpenAI API](https://openai.com/api/) key to run Omega Codex.
+You need an [OpenAI API](https://openai.com/api/) key to run Omegizent.
 
 If you use an API key with *Restricted* permissions, you must grant *Write* permission to the following resources:
 - Model Capabilities
@@ -78,7 +73,7 @@ If you use an API key with *Restricted* permissions, you must grant *Write* perm
 
 ### Qdrant
 
-You need a [Qdrant](https://qdrant.tech/) database to run Omega Codex.
+You need a [Qdrant](https://qdrant.tech/) database to run Omegizent.
 
 We provide instructions for running Qdrant in a Docker container, but other options are available,
 such as [Qdrant Cloud](https://qdrant.tech/documentation/cloud-quickstart/).
@@ -121,20 +116,20 @@ To remove the `qdrant-storage` volume: `docker volume rm qdrant-storage`
 
 ## Configuration
 
-Omega Codex requires the following environment variables to be set:
+Omegizent requires the following environment variables to be set:
 
-- `OMEGACODEX_OPENAI_API_KEY`: Your OpenAI API key.
-- `OMEGACODEX_QDRANT_HOST`: The host name or IP address of your Qdrant database.
-- `OMEGACODEX_QDRANT_GRPC_PORT`: The gRPC port of your Qdrant database, most likely `6334`.
+- `OMEGIZENT_OPENAI_API_KEY`: Your OpenAI API key.
+- `OMEGIZENT_QDRANT_HOST`: The host name or IP address of your Qdrant database.
+- `OMEGIZENT_QDRANT_GRPC_PORT`: The gRPC port of your Qdrant database, most likely `6334`.
 
 We use [dotenv-java](https://github.com/cdimascio/dotenv-java)
 to allow environment variables to be specified in a file.
 To do so, create a file named `.env` in your project root directory with the following:
 
 ```env
-OMEGACODEX_OPENAI_API_KEY=openai-api-key
-OMEGACODEX_QDRANT_HOST=qdrant-host
-OMEGACODEX_QDRANT_GRPC_PORT=qdrant-grpc-port
+OMEGIZENT_OPENAI_API_KEY=openai-api-key
+OMEGIZENT_QDRANT_HOST=qdrant-host
+OMEGIZENT_QDRANT_GRPC_PORT=qdrant-grpc-port
 ```
 
 Replace the values with settings appropriate for your environment.
@@ -145,7 +140,7 @@ Replace the values with settings appropriate for your environment.
 
 ## Building and Running
 
-To build Omega Codex and run the unit tests: `mvn package`
+To build Omegizent and run the unit tests: `mvn package`
 
 To run the integration tests: `mvn verify`
 

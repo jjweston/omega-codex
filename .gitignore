@@ -20,10 +20,10 @@
 
 # IntelliJ configuration
 /.idea/
-/omega-codex.iml
+/omegizent.iml
 
 # local environment configuration
 /.env
 
-# Omega Codex work directory
+# Omegizent work directory
 /work/
